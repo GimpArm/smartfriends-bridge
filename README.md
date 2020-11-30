@@ -5,14 +5,15 @@ This project is a simple REST API that can be used to control all your SmartFrie
 
 This is a re-write in C# .Net taking heavy inspiration from the NodeJS Schellenber API developed by [airthusiast](https://github.com/airthusiast/schellenberg-rest-api) and the Schellenberg API developed by [LoPablo](https://github.com/LoPablo).
 
-Tests have been carried out on: 
-- Smart Friends Box
+Tests have been carried out on on the Smart Friends Box but it probably also works on the Schellenberg SH1-Box.
+
+You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotnet/5.0) installed to use this.
 
 ## How to use the REST API?
 ### Configuration and first start
 
 - Opend the (appsettings.json) and change it accordingly:
-  ```json
+  ```yaml
   {
   "SmartFriends": {
     "Username": "", #---------------> Username (case sensitive)
