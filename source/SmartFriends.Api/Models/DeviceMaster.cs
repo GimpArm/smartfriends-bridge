@@ -34,8 +34,8 @@ namespace SmartFriends.Api.Models
             Id = id;
             _devices = devices.ToArray();
             _room = roomInfo;
-            _controlDevice = devices.FirstOrDefault(x => x.Definition?.DeviceType?.SwitchingValues?.Any() ?? false);
-            _analogDevice = devices.Where(x => (x.Definition?.DeviceType?.Max.HasValue ?? false) && (x.Definition?.DeviceType?.Min.HasValue ?? false)).OrderByDescending(x => x.Definition.DeviceType.Max).ThenBy(x => x.Definition.DeviceType.Min).FirstOrDefault();
+            _controlDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.SwitchingValues?.Any() ?? false);
+            _analogDevice = _devices.Where(x => (x.Definition?.DeviceType?.Max.HasValue ?? false) && (x.Definition?.DeviceType?.Min.HasValue ?? false)).OrderByDescending(x => x.Definition.DeviceType.Max).ThenBy(x => x.Definition.DeviceType.Min).FirstOrDefault();
             Name = _controlDevice?.MasterDeviceName;
         }
 
@@ -87,6 +87,30 @@ namespace SmartFriends.Api.Models
             {
                 AnalogValue = analog.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(analog.Value);
             }
+        }
+
+        public void UpdateValue(int value)
+        {
+            //probably a switching command
+            if (_controlDevice.Definition.DeviceType.SwitchingValues.Any(x => x.Value == value))
+            {
+                if (value == 1 || value == 0)
+                {
+                    ControlValue = value;
+                    return;
+                }
+                //probably a toggle but could be anything like a stop. It doesn't matter too much if we're wrong it will be refreshed.
+                if (value == 2)
+                {
+                    ControlValue = ControlValue == 0 ? 1 : 0;
+                    return;
+                }
+            }
+
+            //Anything else just set the analog value if there is one.
+            if (_analogDevice == null) return;
+
+            AnalogValue = value;
         }
     }
 }

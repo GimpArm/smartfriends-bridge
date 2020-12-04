@@ -3,7 +3,14 @@
   <PropertyGroup>
     <TargetFramework>net50</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileTag>smartfriends-rest-api</DockerfileTag>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\SmartFriends.Api\CA.pem" Link="CA.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Logging.Memory" Version="3.0.1" />

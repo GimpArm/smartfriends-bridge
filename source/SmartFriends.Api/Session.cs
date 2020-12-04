@@ -56,34 +56,40 @@ namespace SmartFriends.Api
         public async Task<bool> SetDeviceValue(int id, bool value)
         {
             var device = GetDevice(id);
-            if (device == null) return false;
 
-            var command = device.GetDigitalCommand(value);
+            var command = device?.GetDigitalCommand(value);
             if (command == null) return false;
 
-            return await _client.SendCommand(command);
+            if (!await _client.SendCommand(command)) return false;
+
+            device.UpdateValue(command.Value);
+            return true;
         }
 
         public async Task<bool> SetDeviceValue(int id, int value)
         {
             var device = GetDevice(id);
-            if (device == null) return false;
 
-            var command = device.GetAnalogCommand(value);
+            var command = device?.GetAnalogCommand(value);
             if (command == null) return false;
 
-            return await _client.SendCommand(command);
+            if (!await _client.SendCommand(command)) return false;
+
+            device.UpdateValue(command.Value);
+            return true;
         }
 
         public async Task<bool> SetDeviceValue(int id, string value)
         {
             var device = GetDevice(id);
-            if (device == null) return false;
 
-            var command = device.GetKeywordCommand(value);
+            var command = device?.GetKeywordCommand(value);
             if (command == null) return false;
 
-            return await _client.SendCommand(command);
+            if (!await _client.SendCommand(command)) return false;
+
+            device.UpdateValue(command.Value);
+            return true;
         }
 
         private void DeviceUpdated(object sender, DeviceValue value)
@@ -94,10 +100,9 @@ namespace SmartFriends.Api
 
         public async Task RefreshDevices()
         {
-            JObject result;
             try
             {
-                result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate));
+                var result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate));
                 _lastUpdate = result["currentTimestamp"].Value<long>();
                 if (!_definitions.Any())
                 {
@@ -114,6 +119,8 @@ namespace SmartFriends.Api
                 foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId))
                 {
                     var masterId = masterDevice.Key;
+                    if (DeviceMasters.Any(x => x.Id == masterId)) continue;
+
                     var devices = masterDevice.ToList();
                     var room = _rooms.FirstOrDefault(x => x.RoomID == devices[0].RoomId);
                     if (room == null) continue;
@@ -126,9 +133,8 @@ namespace SmartFriends.Api
                 foreach (var masterDevice in values.GroupBy(x => x.MasterDeviceID))
                 {
                     var master = DeviceMasters.FirstOrDefault(x => x.Id == masterDevice.Key);
-                    if (master == null) continue;
 
-                    master.SetValues(masterDevice.ToArray());
+                    master?.SetValues(masterDevice.ToArray());
                 }
             }
             catch(Exception e)
@@ -161,7 +167,10 @@ namespace SmartFriends.Api
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _refreshThread?.Dispose();
-            await _client?.Close();
+            if (_client != null)
+            {
+                await _client?.Close();
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -20,13 +21,13 @@ namespace SmartFriends.Api
     public class Client: IDisposable
     {
         private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
-        private readonly TcpClient _client;
-        private readonly SslStream _stream;
         private readonly Configuration _configuration;
         private readonly ILogger _logger;
         private readonly Thread _readerThread;
         private readonly ConcurrentQueue<Message> _messageQueue = new ConcurrentQueue<Message>();
 
+        private TcpClient _client;
+        private SslStream _stream;
         private GatewayInfo _deviceInfo;
 
         public bool Connected { get; private set; }
@@ -36,8 +37,6 @@ namespace SmartFriends.Api
         public Client(Configuration configuration, ILogger logger)
         {
             _configuration = configuration;
-            _client = new TcpClient(_configuration.Host, _configuration.Port);
-            _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
             _logger = logger;
             _readerThread = new Thread(Reader);
         }
@@ -46,6 +45,7 @@ namespace SmartFriends.Api
         {
             Connected = false;
             _stream?.Close();
+            _stream?.Dispose();
             _client?.Close();
             _client?.Dispose();
         }
@@ -54,9 +54,11 @@ namespace SmartFriends.Api
         {
             try
             {
-                var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _logger.LogInformation($"Connecting to {_configuration.Host}");
-                _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new [] { cert }), System.Security.Authentication.SslProtocols.Tls, false);
+                var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
+                _client = new TcpClient(_configuration.Host, _configuration.Port);
+                _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
+                _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new[] { cert }), SslProtocols.Tls, false);
                 _readerThread.Start();
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
@@ -76,6 +78,10 @@ namespace SmartFriends.Api
             {
                 _logger.LogError(e, "Failed to open socket to host");
                 Connected = false;
+                _stream?.Close();
+                _stream?.Dispose();
+                _client?.Close();
+                _client?.Dispose();
                 return false;
             }
         }
@@ -200,7 +206,7 @@ namespace SmartFriends.Api
         {
             return JsonConvert.DeserializeObject<T>(input, new JsonSerializerSettings
             {
-                Converters = new []{ new SwitchingValueConverter() }
+                Converters = new JsonConverter[]{ new SwitchingValueConverter() }
             });
         }
     }
