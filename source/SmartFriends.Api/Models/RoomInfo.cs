@@ -11,7 +11,7 @@ namespace SmartFriends.Api.Models
         public string IconName { get; set; }
 
         [JsonProperty("roomID")]
-        public int RoomID { get; set; }
+        public int RoomId { get; set; }
 
         [JsonProperty("roomName")]
         public string RoomName { get; set; }
@@ -21,12 +21,18 @@ namespace SmartFriends.Api.Models
 
         public string GetCleanName()
         {
-            return !RoomName.StartsWith("${") ? RoomName : RoomName.Substring(2, RoomName.Length - 3);
+            return !RoomName.StartsWith("${") ? RoomName : RoomName[2..^1];
         }
 
         public override bool Equals(object obj)
         {
-            return obj is RoomInfo room && room.RoomID == RoomID;
+            return obj is RoomInfo room && room.RoomId == RoomId;
+        }
+
+        public override int GetHashCode()
+        {
+            // ReSharper disable once NonReadonlyMemberInGetHashCode
+            return RoomId.GetHashCode();
         }
     }
 }

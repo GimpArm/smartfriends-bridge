@@ -23,7 +23,7 @@ namespace SmartFriends.Api.Models
 
         public int? AnalogValue { get; private set; }
 
-        public string[] Commands => _controlDevice?.Definition?.DeviceType.SwitchingValues?.Select(x => x.Name.Substring(2, x.Name.Length - 3)).ToArray();
+        public string[] Commands => _controlDevice?.Definition?.DeviceType.SwitchingValues?.Select(x => x.Name[2..^1]).ToArray();
 
         public int? Min => _analogDevice?.Definition.DeviceType.Min;
         public int? Max => _analogDevice?.Definition.DeviceType.Max;
