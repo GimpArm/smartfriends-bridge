@@ -48,6 +48,7 @@ namespace SmartFriends.Api
             _stream?.Dispose();
             _client?.Close();
             _client?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public async Task<bool> Open()
@@ -104,13 +105,13 @@ namespace SmartFriends.Api
         public async Task<T> SendAndReceiveCommand<T>(CommandBase command)
         {
             var message = await SendCommand(command, false);
-            return message.Response.ToObject<T>();
+            return message == null ? default : message.Response.ToObject<T>();
         }
 
         public async Task<bool> SendCommand(CommandBase command)
         {
             var message = await SendCommand(command, false);
-            return message.ResponseMessage?.Equals("success", StringComparison.InvariantCultureIgnoreCase) ?? false;
+            return message?.ResponseMessage?.Equals("success", StringComparison.InvariantCultureIgnoreCase) ?? false;
         }
 
         private async Task<Message> SendCommand(CommandBase command, bool skipEnsure)
@@ -119,17 +120,18 @@ namespace SmartFriends.Api
             {
                 await EnsureConnection();
             }
-            Message message;
+            Message message = null;
             command.SessionId = _deviceInfo?.SessionId;
             var json = Serialize(command);
             _logger.LogDebug($"Send: {json}");
             await _semaphoreSlim.WaitAsync();
+            using var token = new CancellationTokenSource(2500);
             try
             {
-                await _stream.WriteAsync(Encoding.UTF8.GetBytes(json));
-                while (!_messageQueue.TryDequeue(out message))
+                await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
+                while (!_messageQueue.TryDequeue(out message) && !token.IsCancellationRequested)
                 {
-                    await Task.Delay(10);
+                    await Task.Delay(10, token.Token);
                 }
             }
             finally

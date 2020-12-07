@@ -103,7 +103,7 @@ namespace SmartFriends.Api
             try
             {
                 var result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate));
-                _lastUpdate = result["currentTimestamp"].Value<long>();
+                _lastUpdate = result?["currentTimestamp"].Value<long>() ?? throw new Exception("Server did not respond.");
                 if (!_definitions.Any())
                 {
                     var definitions = result["newCompatibilityConfiguration"]["compatibleRadioStandards"].ToObject<CompatibleDevices[]>().SelectMany(x => x.Definitions);
@@ -122,7 +122,7 @@ namespace SmartFriends.Api
                     if (DeviceMasters.Any(x => x.Id == masterId)) continue;
 
                     var devices = masterDevice.ToList();
-                    var room = _rooms.FirstOrDefault(x => x.RoomID == devices[0].RoomId);
+                    var room = _rooms.FirstOrDefault(x => x.RoomId == devices[0].RoomId);
                     if (room == null) continue;
 
                     var master = new DeviceMaster(masterId, room, devices);
@@ -152,6 +152,7 @@ namespace SmartFriends.Api
         {
             _refreshThread?.Dispose();
             _client?.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -160,7 +161,7 @@ namespace SmartFriends.Api
             {
                 if (cancellationToken.IsCancellationRequested) break;
 
-                await Task.Delay(5000);
+                await Task.Delay(5000, cancellationToken);
             }
         }
 
