@@ -24,12 +24,13 @@ namespace SmartFriends.Api
         private readonly SemaphoreSlim _connectionSemaphore = new SemaphoreSlim(1, 1);
         private readonly Configuration _configuration;
         private readonly ILogger _logger;
-        private readonly Thread _readerThread;
         private readonly ConcurrentQueue<Message> _messageQueue = new ConcurrentQueue<Message>();
 
         private TcpClient _client;
         private SslStream _stream;
         private GatewayInfo _deviceInfo;
+        private Thread _readerThread;
+        private CancellationTokenSource _tokenSource;
 
         public bool Connected { get; private set; }
 
@@ -39,7 +40,6 @@ namespace SmartFriends.Api
         {
             _configuration = configuration;
             _logger = logger;
-            _readerThread = new Thread(Reader);
         }
 
         public void Dispose()
@@ -60,13 +60,12 @@ namespace SmartFriends.Api
             try
             {
                 if (Connected) return Connected;
-
                 _logger.LogInformation($"Connecting to {_configuration.Host}");
                 var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _client = new TcpClient(_configuration.Host, _configuration.Port);
                 _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
                 _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new[] {cert}), SslProtocols.Tls, false);
-                _readerThread.Start();
+                await EnsureReader(true);
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
 
@@ -99,15 +98,29 @@ namespace SmartFriends.Api
             {
                 await Open();
             }
-            if (!_readerThread.IsAlive)
+
+            await EnsureReader();
+        }
+
+        private async Task EnsureReader(bool forceRestart = false)
+        {
+            if (!forceRestart && (_readerThread?.IsAlive ?? false)) return;
+
+            _tokenSource?.Cancel();
+            while (_readerThread?.IsAlive ?? false)
             {
-                _readerThread.Start();
+                await Task.Delay(10);
             }
+
+            _readerThread = new Thread(Reader);
+            _tokenSource = new CancellationTokenSource();
+            _readerThread.Start(_tokenSource.Token);
         }
 
         public Task Close()
         {
             Connected = false;
+            _tokenSource?.Cancel();
             _stream?.Close();
             _stream?.Dispose();
             _client?.Close();
@@ -166,18 +179,19 @@ namespace SmartFriends.Api
 
         private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true;
 
-        private void Reader()
+        private void Reader(object input)
         {
             try
             {
-                while (Connected)
+                var token = (CancellationToken) input;
+                while (!token.IsCancellationRequested)
                 {
                     var buffer = new byte[2048];
                     var messageData = new StringBuilder();
                     int bytes;
                     do
                     {
-                        bytes = _stream.Read(buffer, 0, buffer.Length);
+                        bytes = _stream.ReadAsync(buffer, 0, buffer.Length, token).Result;
 
                         var decoder = Encoding.UTF8.GetDecoder();
                         var chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
@@ -188,7 +202,7 @@ namespace SmartFriends.Api
                         {
                             break;
                         }
-                    } while (bytes != 0);
+                    } while (bytes != 0 && !token.IsCancellationRequested);
 
                     var message = Deserialize<Message>(messageData.ToString());
                     if (message.ResponseMessage == "newDeviceValue")
