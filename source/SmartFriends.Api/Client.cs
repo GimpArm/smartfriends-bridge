@@ -20,7 +20,8 @@ namespace SmartFriends.Api
 {
     public class Client: IDisposable
     {
-        private readonly SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _commandSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _connectionSemaphore = new SemaphoreSlim(1, 1);
         private readonly Configuration _configuration;
         private readonly ILogger _logger;
         private readonly Thread _readerThread;
@@ -53,13 +54,18 @@ namespace SmartFriends.Api
 
         public async Task<bool> Open()
         {
+            if (Connected) return Connected;
+
+            await _connectionSemaphore.WaitAsync();
             try
             {
+                if (Connected) return Connected;
+
                 _logger.LogInformation($"Connecting to {_configuration.Host}");
                 var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _client = new TcpClient(_configuration.Host, _configuration.Port);
                 _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
-                _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new[] { cert }), SslProtocols.Tls, false);
+                _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new[] {cert}), SslProtocols.Tls, false);
                 _readerThread.Start();
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
@@ -78,26 +84,34 @@ namespace SmartFriends.Api
             catch (Exception e)
             {
                 _logger.LogError(e, "Failed to open socket to host");
-                Connected = false;
-                _stream?.Close();
-                _stream?.Dispose();
-                _client?.Close();
-                _client?.Dispose();
+                await Close();
                 return false;
+            }
+            finally
+            {
+                _connectionSemaphore.Release();
             }
         }
 
         private async Task EnsureConnection()
         {
-            if (Connected) return;
-            await Open();
+            if (!Connected)
+            {
+                await Open();
+            }
+            if (!_readerThread.IsAlive)
+            {
+                _readerThread.Start();
+            }
         }
 
         public Task Close()
         {
             Connected = false;
-            _stream.Close();
-            _client.Close();
+            _stream?.Close();
+            _stream?.Dispose();
+            _client?.Close();
+            _client?.Dispose();
             _deviceInfo = null;
             return Task.CompletedTask;
         }
@@ -120,14 +134,14 @@ namespace SmartFriends.Api
             {
                 await EnsureConnection();
             }
-            Message message = null;
+            Message message;
             command.SessionId = _deviceInfo?.SessionId;
             var json = Serialize(command);
             _logger.LogDebug($"Send: {json}");
-            await _semaphoreSlim.WaitAsync();
-            using var token = new CancellationTokenSource(2500);
+            await _commandSemaphore.WaitAsync();
             try
             {
+                using var token = new CancellationTokenSource(2500);
                 await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
                 while (!_messageQueue.TryDequeue(out message) && !token.IsCancellationRequested)
                 {
@@ -136,7 +150,7 @@ namespace SmartFriends.Api
             }
             finally
             {
-                _semaphoreSlim.Release();
+                _commandSemaphore.Release();
             }
             return message;
         }
@@ -156,7 +170,7 @@ namespace SmartFriends.Api
         {
             try
             {
-                while (_client.Connected)
+                while (Connected)
                 {
                     var buffer = new byte[2048];
                     var messageData = new StringBuilder();
@@ -187,12 +201,11 @@ namespace SmartFriends.Api
                         _messageQueue.Enqueue(message);
                     }
                 }
-
             }
             catch (Exception e)
             {
                 //Only log if still connected.
-                if (_client.Connected)
+                if (Connected)
                 {
                     _logger.LogError(e, "Connection closed");
                 }
