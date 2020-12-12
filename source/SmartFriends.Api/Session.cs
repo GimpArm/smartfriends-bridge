@@ -170,7 +170,7 @@ namespace SmartFriends.Api
             _refreshThread?.Dispose();
             if (_client != null)
             {
-                await _client?.Close();
+                await _client.Close();
             }
         }
     }
