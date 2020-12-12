@@ -12,7 +12,7 @@ You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotne
 ## How to use the REST API?
 ### Configuration and first start
 
-- Opend the (appsettings.json) and change it accordingly:
+- Open the (appsettings.json) and change it accordingly:
   ```yaml
   {
   "SmartFriends": {
