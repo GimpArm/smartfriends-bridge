@@ -129,19 +129,19 @@ namespace SmartFriends.Api
             return Task.CompletedTask;
         }
 
-        public async Task<T> SendAndReceiveCommand<T>(CommandBase command)
+        public async Task<T> SendAndReceiveCommand<T>(CommandBase command, int timeout = 2500)
         {
-            var message = await SendCommand(command, false);
+            var message = await SendCommand(command, false, timeout);
             return message == null ? default : message.Response.ToObject<T>();
         }
 
-        public async Task<bool> SendCommand(CommandBase command)
+        public async Task<bool> SendCommand(CommandBase command, int timeout = 2500)
         {
             var message = await SendCommand(command, false);
             return message?.ResponseMessage?.Equals("success", StringComparison.InvariantCultureIgnoreCase) ?? false;
         }
 
-        private async Task<Message> SendCommand(CommandBase command, bool skipEnsure)
+        private async Task<Message> SendCommand(CommandBase command, bool skipEnsure, int timeout = 2500)
         {
             if (!skipEnsure)
             {
@@ -152,9 +152,9 @@ namespace SmartFriends.Api
             var json = Serialize(command);
             _logger.LogDebug($"Send: {json}");
             await _commandSemaphore.WaitAsync();
+            using var token = new CancellationTokenSource(timeout);
             try
             {
-                using var token = new CancellationTokenSource(2500);
                 await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
                 while (!_messageQueue.TryDequeue(out message) && !token.IsCancellationRequested)
                 {

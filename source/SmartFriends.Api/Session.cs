@@ -14,7 +14,8 @@ namespace SmartFriends.Api
     public class Session: IHostedService, IDisposable
     {
         private long _lastUpdate;
-        private Timer _refreshThread;
+        private Thread _refreshThread;
+        private CancellationTokenSource _tokenSource;
         private readonly Client _client;
         private readonly ILogger _logger;
 
@@ -36,9 +37,11 @@ namespace SmartFriends.Api
             {
                 var result = await _client.Open();
                 if (!result) return false;
+                _tokenSource?.Cancel();
+                _tokenSource = new CancellationTokenSource();
 
-                await RefreshDevices();
-                _refreshThread = new Timer(Keepalive, null, 5000, 5000);
+                _refreshThread = new Thread(Keepalive);
+                _refreshThread.Start(_tokenSource.Token);
                 return true;
             }
             catch(Exception e)
@@ -100,9 +103,10 @@ namespace SmartFriends.Api
 
         public async Task RefreshDevices()
         {
+            JObject result;
             try
             {
-                var result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate));
+                result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate), 5000);
                 _lastUpdate = result?["currentTimestamp"].Value<long>() ?? throw new Exception("Server did not respond.");
                 if (!_definitions.Any())
                 {
@@ -143,14 +147,19 @@ namespace SmartFriends.Api
             }
         }
 
-        private void Keepalive(object stateInfo)
+        private void Keepalive(object input)
         {
-            RefreshDevices().Wait();
+            var token = (CancellationToken) input;
+            while (!token.IsCancellationRequested)
+            {
+                RefreshDevices().Wait(token);
+                Task.Delay(5000, token).Wait(token);
+            }
         }
 
         public void Dispose()
         {
-            _refreshThread?.Dispose();
+            _tokenSource?.Cancel();
             _client?.Dispose();
             GC.SuppressFinalize(this);
         }
@@ -167,7 +176,7 @@ namespace SmartFriends.Api
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _refreshThread?.Dispose();
+            _tokenSource?.Cancel();
             if (_client != null)
             {
                 await _client.Close();
