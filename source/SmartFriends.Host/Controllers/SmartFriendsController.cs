@@ -37,7 +37,6 @@ namespace SmartFriends.Host.Controllers
         [HttpGet("{id}")]
         public DeviceMaster Get(int id)
         {
-            _logger.LogInformation($"Get: {id}");
             return _session.GetDevice(id);
         }
 
