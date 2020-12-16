@@ -103,7 +103,7 @@ namespace SmartFriends.Api
 
         public async Task RefreshDevices()
         {
-            JObject result;
+            JObject result = null;
             try
             {
                 result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate), 5000);
@@ -144,6 +144,7 @@ namespace SmartFriends.Api
             catch(Exception e)
             {
                 _logger.LogError(e, "Refresh failed");
+                _logger.LogDebug($"Response: {result}");
             }
         }
 
