@@ -143,8 +143,7 @@ namespace SmartFriends.Api
             }
             catch(Exception e)
             {
-                _logger.LogError(e, "Refresh failed");
-                _logger.LogDebug($"Response: {result}");
+                _logger.LogError(e, $"Refresh failed\n{result}");
             }
         }
 
