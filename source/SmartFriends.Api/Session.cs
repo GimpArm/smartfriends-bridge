@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace SmartFriends.Api
 {
@@ -103,10 +104,11 @@ namespace SmartFriends.Api
 
         public async Task RefreshDevices()
         {
-            JObject result = null;
+            Message message = null;
             try
             {
-                result = await _client.SendAndReceiveCommand<JObject>(new GetAllNewInfos(_lastUpdate), 5000);
+                message = await _client.SendAndReceiveCommand<Message>(new GetAllNewInfos(_lastUpdate), 5000);
+                var result = message.Response;
                 _lastUpdate = result?["currentTimestamp"].Value<long>() ?? throw new Exception("Server did not respond.");
                 if (!_definitions.Any())
                 {
@@ -143,7 +145,7 @@ namespace SmartFriends.Api
             }
             catch(Exception e)
             {
-                _logger.LogError(e, $"Refresh failed\n{result}");
+                _logger.LogError(e, $"Refresh failed\n{JsonConvert.SerializeObject(message)}");
             }
         }
 
