@@ -64,7 +64,7 @@ namespace SmartFriends.Api
                 var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _client = new TcpClient(_configuration.Host, _configuration.Port);
                 _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
-                _stream.AuthenticateAsClient(_configuration.Host, new X509CertificateCollection(new[] {cert}), SslProtocols.Tls, false);
+                await _stream.AuthenticateAsClientAsync(_configuration.Host, new X509CertificateCollection(new[] {cert}), SslProtocols.Tls, false);
                 await EnsureReader(true);
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
@@ -75,7 +75,7 @@ namespace SmartFriends.Api
                 }
                 else
                 {
-                    _logger.LogInformation($"Logged in {_deviceInfo?.Hardware}");
+                    _logger.LogInformation($"Logged in to {_deviceInfo?.Hardware}");
                 }
 
                 return Connected;
@@ -132,6 +132,10 @@ namespace SmartFriends.Api
         public async Task<T> SendAndReceiveCommand<T>(CommandBase command, int timeout = 2500)
         {
             var message = await SendCommand(command, false, timeout);
+            if (typeof(T) == typeof(Message))
+            {
+                return (T)(object)message;
+            }
             return message == null ? default : message.Response.ToObject<T>();
         }
 
@@ -155,6 +159,12 @@ namespace SmartFriends.Api
             using var token = new CancellationTokenSource(timeout);
             try
             {
+                //Clear the queue so we don't get old messages.
+                while (_messageQueue.TryDequeue(out message))
+                {
+                    _logger.LogInformation($"Abandoned message {JsonConvert.SerializeObject(message)}");
+                }
+
                 await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
                 while (!_messageQueue.TryDequeue(out message) && !token.IsCancellationRequested)
                 {
