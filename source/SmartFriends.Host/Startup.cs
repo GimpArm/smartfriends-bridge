@@ -24,11 +24,11 @@ namespace SmartFriends.Host
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<Configuration>(Configuration.GetSection("SmartFriends"));
-            services.AddSingleton<Session>(x => new Session(x.GetService<IOptions<Configuration>>().Value, x.GetService<ILogger<Session>>()));
+            services.AddSingleton(x => new Session(x.GetService<IOptions<Configuration>>().Value, x.GetService<ILogger<Session>>()));
             services.AddHostedService(x => x.GetService<Session>());
             services.AddControllers().AddNewtonsoftJson(x =>
             {
-                x.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+                x.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                 x.SerializerSettings.Formatting = Formatting.Indented;
             });
         }

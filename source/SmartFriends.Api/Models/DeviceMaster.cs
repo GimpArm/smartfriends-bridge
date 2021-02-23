@@ -3,6 +3,7 @@ using SmartFriends.Api.Models.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SmartFriends.Api.Helpers;
 
 namespace SmartFriends.Api.Models
 {
@@ -18,6 +19,14 @@ namespace SmartFriends.Api.Models
         public string Name { get; }
 
         public string Room => _room?.GetCleanName() ?? "Unknown";
+
+        public string GatewayDevice { get; set; }
+
+        public string Kind => _controlDevice?.Definition?.DeviceType?.Kind?.FirstCharToUpper();
+
+        public string Manufacturer => _controlDevice?.Manufacturer;
+
+        public string Model => _controlDevice?.ProductDesignation;
 
         public int ControlValue { get; private set; }
 
@@ -72,21 +81,35 @@ namespace SmartFriends.Api.Models
             return null;
         }
 
-        public void SetValues(params DeviceValue[] values)
+        public bool SetValues(params DeviceValue[] values)
         {
-            if (!values?.Any() ?? true) return;
-            var control = values.FirstOrDefault(x => x.DeviceID == _controlDevice.DeviceId);
-            if (control != null)
+            if (!values?.Any() ?? true) return false;
+            var updated = false;
+
+            if (_controlDevice != null)
             {
-                ControlValue = control.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(control.Value);
+                var control = values.FirstOrDefault(x => x.DeviceID == _controlDevice.DeviceId);
+                if (control != null)
+                {
+                    var newValue = control.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(control.Value);
+                    if (newValue != ControlValue)
+                    {
+                        ControlValue = newValue;
+                        updated = true;
+                    }
+                }
             }
-            if (_analogDevice == null) return;
+
+            if (_analogDevice == null) return updated;
 
             var analog = values.FirstOrDefault(x => x.DeviceID == _analogDevice.DeviceId);
             if (analog != null)
             {
                 AnalogValue = analog.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(analog.Value);
+                return true;
             }
+
+            return updated;
         }
 
         public void UpdateValue(int value)

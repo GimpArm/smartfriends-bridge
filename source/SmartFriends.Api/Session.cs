@@ -23,13 +23,16 @@ namespace SmartFriends.Api
         private readonly List<DeviceDefinition> _definitions = new List<DeviceDefinition>();
         private readonly List<RoomInfo> _rooms = new List<RoomInfo>();
 
+        public bool Ready { get; private set; }
         public readonly List<DeviceMaster> DeviceMasters = new List<DeviceMaster>();
+
+        public event EventHandler<DeviceValue> DeviceUpdated;
 
         public Session(Configuration configuration, ILogger logger)
         {
             _logger = logger;
             _client = new Client(configuration, logger);
-            _client.DeviceUpdated += DeviceUpdated;
+            _client.DeviceUpdated += ClientDeviceUpdated;
         }
 
         public async Task<bool> Open()
@@ -96,10 +99,13 @@ namespace SmartFriends.Api
             return true;
         }
 
-        private void DeviceUpdated(object sender, DeviceValue value)
+        private void ClientDeviceUpdated(object sender, DeviceValue value)
         {
             var device = GetDevice(value.MasterDeviceID);
-            device?.SetValues(value);
+            if (device?.SetValues(value) ?? false)
+            {
+                DeviceUpdated?.Invoke(this, value);
+            }
         }
 
         public async Task RefreshDevices()
@@ -131,17 +137,20 @@ namespace SmartFriends.Api
                     var room = _rooms.FirstOrDefault(x => x.RoomId == devices[0].RoomId);
                     if (room == null) continue;
 
-                    var master = new DeviceMaster(masterId, room, devices);
+                    var master = new DeviceMaster(masterId, room, devices)
+                    {
+                        GatewayDevice = _client.GatewayDevice
+                    };
                     DeviceMasters.Add(master);
                 }
 
                 var values = result["newDeviceValues"].ToObject<DeviceValue[]>();
-                foreach (var masterDevice in values.GroupBy(x => x.MasterDeviceID))
+                foreach (var value in values)
                 {
-                    var master = DeviceMasters.FirstOrDefault(x => x.Id == masterDevice.Key);
-
-                    master?.SetValues(masterDevice.ToArray());
+                    ClientDeviceUpdated(this, value);
                 }
+
+                Ready = true;
             }
             catch(Exception e)
             {
@@ -151,11 +160,19 @@ namespace SmartFriends.Api
 
         private void Keepalive(object input)
         {
-            var token = (CancellationToken) input;
-            while (!token.IsCancellationRequested)
+            try
             {
-                RefreshDevices().Wait(token);
-                Task.Delay(5000, token).Wait(token);
+
+                var token = (CancellationToken) input;
+                while (!token.IsCancellationRequested)
+                {
+                    RefreshDevices().Wait(token);
+                    Task.Delay(5000, token).Wait(token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                //Eat the operation cancelled exceptions
             }
         }
 

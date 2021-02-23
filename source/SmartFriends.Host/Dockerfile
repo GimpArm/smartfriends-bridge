@@ -1,5 +1,3 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
@@ -7,6 +5,7 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 WORKDIR /src
 COPY ["SmartFriends.Host/SmartFriends.Host.csproj", "SmartFriends.Host/"]
+COPY ["SmartFriends.Api/SmartFriends.Api.csproj", "SmartFriends.Api/"]
 RUN dotnet restore "SmartFriends.Host/SmartFriends.Host.csproj"
 COPY . .
 WORKDIR "/src/SmartFriends.Host"
