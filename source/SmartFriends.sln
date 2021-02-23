@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30711.63
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartFriends.Api", "SmartFriends.Api\SmartFriends.Api.csproj", "{F2E7B4CD-2D4C-4721-9EBB-E5FC5E6CD7D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFriends.Host", "SmartFriends.Host\SmartFriends.Host.csproj", "{B1B6A40C-2A5A-49E5-826B-5B070AC16435}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartFriends.Host", "SmartFriends.Host\SmartFriends.Host.csproj", "{B1B6A40C-2A5A-49E5-826B-5B070AC16435}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmartFriends.Mqtt", "SmartFriends.Mqtt\SmartFriends.Mqtt.csproj", "{DCF27E1C-C74C-4723-ADFE-DC8DFAEAB8CC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{B1B6A40C-2A5A-49E5-826B-5B070AC16435}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1B6A40C-2A5A-49E5-826B-5B070AC16435}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1B6A40C-2A5A-49E5-826B-5B070AC16435}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCF27E1C-C74C-4723-ADFE-DC8DFAEAB8CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCF27E1C-C74C-4723-ADFE-DC8DFAEAB8CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCF27E1C-C74C-4723-ADFE-DC8DFAEAB8CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCF27E1C-C74C-4723-ADFE-DC8DFAEAB8CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -34,6 +34,8 @@ namespace SmartFriends.Api
 
         public bool Connected { get; private set; }
 
+        public string GatewayDevice => _deviceInfo?.Hardware;
+
         public event EventHandler<DeviceValue> DeviceUpdated;
 
         public Client(Configuration configuration, ILogger logger)

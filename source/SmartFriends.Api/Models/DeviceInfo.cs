@@ -31,6 +31,12 @@ namespace SmartFriends.Api.Models
         [JsonProperty("roomID")]
         public int RoomId { get; set; }
 
+        [JsonProperty("manufacturer")]
+        public string Manufacturer { get; set; }
+
+        [JsonProperty("productDesignation")]
+        public string ProductDesignation { get; set; }
+
         public DeviceDefinition Definition { get; set; }
     }
 }
