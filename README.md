@@ -16,7 +16,7 @@ Recommended to use the HASSIO add-on. Add to the Supervisor Add-on store
 
 See readme specific to service type for other install methods.
 
-## How to use is bridge?
+## How to use the bridge?
 
 ### MQTT or REST?
 First decide if using MQTT or REST API.
