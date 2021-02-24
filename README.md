@@ -21,7 +21,7 @@ See readme specific to service type for other install methods.
 ### MQTT or REST?
 First decide if using MQTT or REST API.
 
-MQTT will integrate into the [Home Assistant MQTT Integration(https://www.home-assistant.io/integrations/mqtt). The devices you setup and map will automatically be discovered by the integration creating devices and entities. It also takes advantage of the push notifications from the Smart Friends Box and relays them to the MQTT broker which informs Home Assistant. It is a more powerful interface but requires that you have configured a broker and the MQTT integration, along with some device mappings because the Smart Friends Box does not give enough information to accurately guess the what kind of device or how to control it in Home Assistant.
+MQTT will integrate into the [Home Assistant MQTT Integration](https://www.home-assistant.io/integrations/mqtt). The devices you setup and map will automatically be discovered by the integration creating devices and entities. It also takes advantage of the push notifications from the Smart Friends Box and relays them to the MQTT broker which informs Home Assistant. It is a more powerful interface but requires that you have configured a broker and the MQTT integration, along with some device mappings because the Smart Friends Box does not give enough information to accurately guess the what kind of device or how to control it in Home Assistant.
 
 REST API is a more simple passive system. You must manually configure entities in Home Assistant to query the service along with polling for changes. This means there is usually a few seonc delay between manually operating a device and seeing its state change in Home Assistant.
 
