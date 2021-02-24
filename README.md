@@ -1,17 +1,18 @@
-# SmartFriends REST API
+# SmartFriends Bridge
 
 ## Description
 This project is a simple bridge for the Smart Friends Box and devices (Schellenberg, ABUS, Paulmann, Steinel). There is a REST API and an MQTT client.
 
 Tests have been carried out on on the Smart Friends Box but it probably also works on the Schellenberg SH1-Box.
 
-You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotnet/5.0) installed to use this.
+You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotnet/5.0) installed to use this or you must run as the docker/hassio-addon.
 
 A device **must** be supported by the Smart Friends Box to be controllable. So if you paired a Zigbee or Z-Wave device and do not see it in the Smart Friends app, then is unlikely you be able to control it with this bridge even though you will see the device listed.
 
 ## Installing
 
-Recommended to use the HASSIO add-on. Add to the Supervisor Add-on store `https://github.com/GimpArm/hassio-addons`
+Recommended to use the HASSIO add-on. Add to the Supervisor Add-on store
+`https://github.com/GimpArm/hassio-addons`
 
 See readme specific to service type for other install methods.
 

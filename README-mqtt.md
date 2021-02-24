@@ -36,18 +36,6 @@ dotnet SmartFriends.Mqtt.dll
       ...
     ],
     "DeviceMaps": [ #--------------------> Device map of the Smart Friends Id to the HASSIO type/class with optional device specific overrides. The more specific you are the better.
-      {
-        "Id": 13103,
-        "Type": "cover",
-        "Class": "shutter"
-      },
-      {
-        "Id": 1323,
-        "Type": "switch",
-        "Parameters": {
-          "icon": "hass:lightbulb"
-        }
-      },
       ...
       ...
     ]
@@ -107,9 +95,7 @@ If there is no DeviceMap for a device then it will not be available over MQTT. T
   "Class": string, #----> (optional) The HASSIO device class, not all device types have classes.
   "Paramters": { #------> (optional) Key value override HASSIO settings and TypeTemplate for specific operation of the devices. See HASSIO MQTT device type specific documentation.
     "hassio_key1": value1,
-    "hassio_key2": value2,
-	...
-	...
+    "hassio_key2": value2
   }
 }
 ```
@@ -158,9 +144,7 @@ TypeTemplates are optional but for proper control of most devices it is probably
   "Class": string, #------> (optional) Some device types have a class which you can use be even more specific about when to apply the template.
   "Parameters": { #-------> (required) Key value override HASSIO settings for specific operation of the devices. See HASSIO MQTT device type specific documentation.
     "hassio_key1": value1,
-    "hassio_key2": value2,
-	...
-	...
+    "hassio_key2": value2
   }
 }
 ```
