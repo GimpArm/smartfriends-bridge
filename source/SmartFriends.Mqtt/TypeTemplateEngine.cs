@@ -32,9 +32,7 @@ namespace SmartFriends.Mqtt
         {
             var template = _templates.FirstOrDefault(x =>
                                string.Equals(x.Type, map.Type, StringComparison.InvariantCultureIgnoreCase) && string.Equals(x.Class, map.Class, StringComparison.InvariantCultureIgnoreCase))
-                           ?? _templates.FirstOrDefault(x => string.Equals(x.Class, map.Class, StringComparison.InvariantCultureIgnoreCase))
-                           ?? _templates.FirstOrDefault(x =>
-                               string.Equals(x.Type, map.Type, StringComparison.InvariantCultureIgnoreCase));
+                           ?? _templates.FirstOrDefault(x => string.Equals(x.Type, map.Type, StringComparison.InvariantCultureIgnoreCase));
 
             return template?.Parameters;
         }
