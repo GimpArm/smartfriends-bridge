@@ -1,8 +1,10 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SmartFriends.Api;
+using SmartFriends.Api.Helpers;
 using SmartFriends.Api.Models;
 
 namespace SmartFriends.Mqtt
@@ -36,6 +38,8 @@ namespace SmartFriends.Mqtt
             {
                 await Task.Delay(10, cancellationToken);
             }
+
+            _logger.LogInformation($"=========================Device List========================={Environment.NewLine}{_smartfriendsSession.DeviceMasters.Serialize()}");
 
             if (cancellationToken.IsCancellationRequested) return;
 

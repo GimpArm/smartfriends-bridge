@@ -126,11 +126,7 @@ namespace SmartFriends.Mqtt
             if (_client == null || !_client.IsConnected) return;
             try
             {
-                await _client.PublishAsync(new MqttApplicationMessage
-                {
-                    Topic = $"{_mqttConfig.BaseTopic}/bridge/state",
-                    Payload = Encoding.UTF8.GetBytes("offline")
-                }, CancellationToken.None);
+                await UpdateStatus(false, CancellationToken.None);
 
                 await _client.DisconnectAsync(new MqttClientDisconnectOptions
                 {
@@ -162,6 +158,8 @@ namespace SmartFriends.Mqtt
                 {
                     Name = name,
                     CommandTopic = $"{_mqttConfig.BaseTopic}/{deviceId}/set",
+                    JsonAttributesTopic = $"{_mqttConfig.BaseTopic}/{deviceId}",
+                    StateTopic = $"{_mqttConfig.BaseTopic}/{deviceId}",
                     Availability = new Availability
                     {
                         Topic = $"{_mqttConfig.BaseTopic}/bridge/state"
@@ -184,7 +182,7 @@ namespace SmartFriends.Mqtt
                 await _client.PublishAsync(
                     new MqttApplicationMessage
                     {
-                        Topic = $"homeassistant/{map.Type}/{deviceId}/config",
+                        Topic = $"homeassistant/{map.Type}/{deviceId}/{map.Class ?? map.Type}/config",
                         ContentType = "application/json",
                         Payload = Encoding.UTF8.GetBytes(payload.ToString())
                     },
@@ -196,6 +194,8 @@ namespace SmartFriends.Mqtt
                     }
                 );
             }
+
+            await UpdateStatus(true, CancellationToken.None);
         }
 
         public async Task DeviceUpdated(DeviceMaster deviceInfo, DeviceValue value)
@@ -240,6 +240,15 @@ namespace SmartFriends.Mqtt
             }
         }
 
+        private async Task UpdateStatus(bool online, CancellationToken token)
+        {
+            await _client.PublishAsync(new MqttApplicationMessage
+            {
+                Topic = $"{_mqttConfig.BaseTopic}/bridge/state",
+                Payload = Encoding.UTF8.GetBytes(online ? "online" : "offline")
+            }, token);
+        }
+
         private void Keepalive(object input)
         {
             try
@@ -247,11 +256,7 @@ namespace SmartFriends.Mqtt
                 var token = (CancellationToken)input;
                 while (!token.IsCancellationRequested && (_client?.IsConnected ?? false))
                 {
-                    _client.PublishAsync(new MqttApplicationMessage
-                    {
-                        Topic = $"{_mqttConfig.BaseTopic}/bridge/state",
-                        Payload = Encoding.UTF8.GetBytes("online")
-                    }, token).GetAwaiter().GetResult();
+                    UpdateStatus(true, token).GetAwaiter().GetResult();
 
                     //3 minutes
                     Task.Delay(180000, token).Wait(token);

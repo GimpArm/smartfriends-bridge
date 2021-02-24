@@ -32,6 +32,8 @@ namespace SmartFriends.Api.Models
 
         public int? AnalogValue { get; private set; }
 
+        public string State => _controlDevice?.Definition?.DeviceType.SwitchingValues?.FirstOrDefault(x => x.Value == ControlValue)?.Name[2..^1];
+
         public string[] Commands => _controlDevice?.Definition?.DeviceType.SwitchingValues?.Select(x => x.Name[2..^1]).ToArray();
 
         public int? Min => _analogDevice?.Definition.DeviceType.Min;

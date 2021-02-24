@@ -45,7 +45,20 @@ namespace SmartFriends.Mqtt
 
             foreach (var kvp in parameters)
             {
-                var value = ReplaceVariables(kvp.Value, deviceId, _baseTopic);
+                JToken value;
+                if (int.TryParse(kvp.Value, out var intValue))
+                {
+                    value = intValue;
+                }
+                else if (decimal.TryParse(kvp.Value, out var decValue))
+                {
+                    value = decValue;
+                }
+                else
+                {
+                    value = ReplaceVariables(kvp.Value, deviceId, _baseTopic);
+                }
+
                 if (payload.ContainsKey(kvp.Key))
                 {
                     payload[kvp.Key] = value;
