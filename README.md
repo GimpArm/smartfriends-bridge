@@ -1,16 +1,32 @@
 # SmartFriends REST API
 
 ## Description
-This project is a simple REST API that can be used to control all your SmartFriends devices (Schellenberg, ABUS, Paulmann, Steinel).
-
-This is a re-write in C# .Net taking heavy inspiration from the NodeJS Schellenber API developed by [airthusiast](https://github.com/airthusiast/schellenberg-rest-api) and the Schellenberg API developed by [LoPablo](https://github.com/LoPablo).
+This project is a simple bridge for the Smart Friends Box and devices (Schellenberg, ABUS, Paulmann, Steinel). There is a REST API and an MQTT client.
 
 Tests have been carried out on on the Smart Friends Box but it probably also works on the Schellenberg SH1-Box.
 
 You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotnet/5.0) installed to use this.
 
-## How to use the REST API?
-### Configuration and first start
+A device **must** be supported by the Smart Friends Box to be controllable. So if you paired a Zigbee or Z-Wave device and do not see it in the Smart Friends app, then is unlikely you be able to control it with this bridge even though you will see the device listed.
+
+## Installing
+
+Recommended to use the HASSIO add-on. Add to the Supervisor Add-on store `https://github.com/GimpArm/hassio-addons`
+
+See readme specific to service type for other install methods.
+
+## How to use is bridge?
+
+### MQTT or REST?
+First decide if using MQTT or REST API.
+
+MQTT will integrate into the [Home Assistant MQTT Integration(https://www.home-assistant.io/integrations/mqtt). The devices you setup and map will automatically be discovered by the integration creating devices and entities. It also takes advantage of the push notifications from the Smart Friends Box and relays them to the MQTT broker which informs Home Assistant. It is a more powerful interface but requires that you have configured a broker and the MQTT integration, along with some device mappings because the Smart Friends Box does not give enough information to accurately guess the what kind of device or how to control it in Home Assistant.
+
+REST API is a more simple passive system. You must manually configure entities in Home Assistant to query the service along with polling for changes. This means there is usually a few seonc delay between manually operating a device and seeing its state change in Home Assistant.
+
+### Configuration
+
+**Both MQTT and REST API must be configured to talk to the Smart Friends Box.**
 
 - Open the (appsettings.json) and change it accordingly:
   ```yaml
@@ -31,79 +47,12 @@ You must have the [.Net 5.0 Runtime](https://dotnet.microsoft.com/download/dotne
 
   ![alt](images/doc00.jpg)
 
-- Now the SmartFriends REST API:
-  ```bash
-  dotnet SmartFriends.Host.dll --urls=http://localhost:5001
-  ```
-### Collect devices ID's
-Device ID's **are important**, they will be used to interact with the device itself.
 
-This .Net version makes this process easier. In a browser go to:
-```http://127.0.0.1:5001/list```
+### MQTT Configuration
+[See README-mqtt.md](README-mqtt.md)
 
-And you will see an output like this:
-
-```json
-[
-  {
-    "id": 13103,
-    "name": "Blinds Dining",
-    "room": "Dining Room",
-    "controlValue": 0,
-    "analogValue": 100,
-    "commands": [
-      "Stop",
-      "Up",
-      "Down"
-    ],
-    "min": 0,
-    "max": 100,
-    "stepSize": 1
-  },
-  {
-    "id": 1323,
-    "name": "Light",
-    "room": "LivingRoom",
-    "controlValue": 1,
-    "commands": [
-      "On",
-      "Toggle",
-      "Off"
-    ]
-  },
-  ...
-  ...
-]
-```
-
-### Using REST API
-
-The service exposes a simple REST API, which can be called to control your devices.
-
-#### Examples on how to use the REST API
-- Open Shutter: 
-
-  ```http://127.0.0.1:5001/set/13103/open```
-- Close shutter:
-
-  ```http://127.0.0.1:5001/set/13103/close```
-- Stop shutter:
-  
-  ```http://127.0.0.1:5001/set/13103/stop```
-- Go to position 50%:
-  
-  ```http://127.0.0.1:5001/set/13103/50```
-- Get current shutter position:
-  
-  ```http://127.0.0.1:5001/get/13103```
-  
-Other devices can be controlled by using a command or setting a numeric value. I have only tested Zigbee switched but others should also work.
-
-- Turn light on:
-
-```http://127.0.0.1:5001/set/on```
-
-As it can be seen, actions are send using the device ID.
+### REST API Configuration
+[See README-rest.md](README-rest.md)
 
 ## Acknowledgments
 Special thanks to [LoPablo](https://github.com/LoPablo) and [AirThusiast](https://github.com/airthusiast) for their work on figuring out how the Schellenberg/SmartFriends API functions.
