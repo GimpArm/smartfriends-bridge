@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -24,6 +25,8 @@ namespace SmartFriends.Mqtt
 {
     public class MqttClient: IDisposable
     {
+        public const string DeviceMapFile = "deviceMap.json";
+
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore,
@@ -36,6 +39,7 @@ namespace SmartFriends.Mqtt
         private readonly MqttConfiguration _mqttConfig;
         private readonly TypeTemplateEngine _typeTemplateEngine;
         private readonly MqttFactory _mqttFactory;
+        private readonly DeviceMap[] _deviceMap;
         private IMqttClient _client;
         private CancellationTokenSource _tokenSource;
         private Thread _keepAliveThread;
@@ -47,7 +51,18 @@ namespace SmartFriends.Mqtt
             _logger = logger;
             _mqttConfig = mqttConfig;
             _typeTemplateEngine = templateEngine;
+            _deviceMap = LoadDeviceMap(Path.Combine(_mqttConfig.DataPath, DeviceMapFile));
             _mqttFactory = new MqttFactory();
+        }
+
+        private static DeviceMap[] LoadDeviceMap(string path)
+        {
+            if (File.Exists(path))
+            {
+                return JsonConvert.DeserializeObject<DeviceMap[]>(File.ReadAllText(path));
+            }
+            File.WriteAllText(path, JsonConvert.SerializeObject(Array.Empty<DeviceMap>(), Formatting.Indented));
+            return Array.Empty<DeviceMap>();
         }
 
         public async Task<bool> Open()
@@ -148,7 +163,7 @@ namespace SmartFriends.Mqtt
         {
             foreach (var device in deviceMasters)
             {
-                var map = _mqttConfig.DeviceMaps?.FirstOrDefault(x => x.Id == device.Id);
+                var map = _deviceMap.FirstOrDefault(x => x.Id == device.Id);
                 if (map == null) continue;
 
                 var name = $"{device.Room} {device.Name}".Trim();
@@ -200,7 +215,7 @@ namespace SmartFriends.Mqtt
 
         public async Task DeviceUpdated(DeviceMaster deviceInfo, DeviceValue value)
         {
-            var device = _mqttConfig.DeviceMaps?.FirstOrDefault(x => x.Id == value.MasterDeviceID);
+            var device = _deviceMap.FirstOrDefault(x => x.Id == value.MasterDeviceID);
             if (device == null) return;
 
             await _client.PublishAsync(new MqttApplicationMessage

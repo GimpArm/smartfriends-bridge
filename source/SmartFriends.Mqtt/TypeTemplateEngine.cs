@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SmartFriends.Mqtt.Models;
 
@@ -9,6 +11,8 @@ namespace SmartFriends.Mqtt
 {
     public class TypeTemplateEngine
     {
+        public const string TypeTemplateFile = "typeTemplate.json";
+
         private static readonly Regex DeviceIdRegEx = new Regex(@"(?<!\{)(\{deviceId\})(?!>\})", RegexOptions.IgnoreCase);
         private static readonly Regex BaseTopcRegEx = new Regex(@"(?<!\{)(\{baseTopic\})(?!>\})", RegexOptions.IgnoreCase);
 
@@ -17,8 +21,46 @@ namespace SmartFriends.Mqtt
 
         public TypeTemplateEngine(MqttConfiguration mqttConfig)
         {
-            _templates = mqttConfig.TypeTemplates ?? Array.Empty<TypeTemplate>();
+            _templates = LoadTemplates(Path.Combine(mqttConfig.DataPath, TypeTemplateFile));
             _baseTopic = mqttConfig.BaseTopic;
+        }
+
+        private static TypeTemplate[] LoadTemplates(string path)
+        {
+            if (File.Exists(path))
+            {
+                return JsonConvert.DeserializeObject<TypeTemplate[]>(File.ReadAllText(path));
+            }
+
+            var template = new[]
+            {
+                new TypeTemplate
+                {
+                    Type = "cover",
+                    Class = "shutter",
+                    Parameters = new Dictionary<string, string>
+                    {
+                        {"value_template", "{{ 100 - value_json.analogValue }}"},
+                        {"position_topic", "{baseTopic}/{deviceId}"},
+                        {"set_position_topic", "{baseTopic}/{deviceId}/set"},
+                        {"set_position_template", "{{ 100 - position }}"},
+                        {"payload_stop", "Stop"},
+                        {"payload_open", "Up"},
+                        {"payload_close", "Down"}
+                    }
+                },
+                new TypeTemplate
+                {
+                    Type = "switch",
+                    Parameters = new Dictionary<string, string>
+                    {
+                        {"value_template", "{{ value_json.state }}"}
+                    }
+                }
+            };
+            File.WriteAllText(path, JsonConvert.SerializeObject(template, Formatting.Indented));
+
+            return template;
         }
 
         public void Merge(JObject payload, DeviceMap map, string deviceId)
