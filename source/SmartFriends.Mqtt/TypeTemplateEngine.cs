@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using SmartFriends.Api.Helpers;
 using SmartFriends.Mqtt.Models;
 
 namespace SmartFriends.Mqtt
@@ -70,7 +71,7 @@ namespace SmartFriends.Mqtt
                     }
                 }
             };
-            File.WriteAllText(path, JsonConvert.SerializeObject(template, Formatting.Indented));
+            File.WriteAllText(path, template.Serialize());
 
             return template;
         }

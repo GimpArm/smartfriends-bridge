@@ -65,7 +65,7 @@ namespace SmartFriends.Mqtt
             {
                 return JsonConvert.DeserializeObject<DeviceMap[]>(File.ReadAllText(path));
             }
-            File.WriteAllText(path, JsonConvert.SerializeObject(Array.Empty<DeviceMap>(), Formatting.Indented));
+            File.WriteAllText(path, $"[{Environment.NewLine}{Environment.NewLine}]");
             return Array.Empty<DeviceMap>();
         }
 
