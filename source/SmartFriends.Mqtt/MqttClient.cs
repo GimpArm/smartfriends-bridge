@@ -203,12 +203,14 @@ namespace SmartFriends.Mqtt
                     {
                         Topic = $"homeassistant/{map.Type}/{deviceId}/{map.Class ?? map.Type}/config",
                         ContentType = "application/json",
+                        Retain = true,
                         Payload = Encoding.UTF8.GetBytes(payload.ToString())
                     },
                     new MqttApplicationMessage
                     {
                         Topic = $"{_mqttConfig.BaseTopic}/{deviceId}",
                         ContentType = "application/json",
+                        Retain = true,
                         Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(device, SerializerSettings))
                     }
                 );
@@ -226,6 +228,7 @@ namespace SmartFriends.Mqtt
             {
                 Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}",
                 ContentType = "application/json",
+                Retain = true,
                 Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(deviceInfo, SerializerSettings))
             }, CancellationToken.None);
         }
@@ -264,6 +267,7 @@ namespace SmartFriends.Mqtt
             await _client.PublishAsync(new MqttApplicationMessage
             {
                 Topic = $"{_mqttConfig.BaseTopic}/bridge/state",
+                Retain = true,
                 Payload = Encoding.UTF8.GetBytes(online ? "online" : "offline")
             }, token);
         }
