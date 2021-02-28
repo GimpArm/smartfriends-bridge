@@ -7,12 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
-using MQTTnet.Client;
 using MQTTnet.Client.Connecting;
 using MQTTnet.Client.Disconnecting;
 using MQTTnet.Client.Options;
 using MQTTnet.Client.Receiving;
-using MQTTnet.Client.Subscribing;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Formatter;
 using Newtonsoft.Json;
@@ -40,7 +38,7 @@ namespace SmartFriends.Mqtt
         private readonly TypeTemplateEngine _typeTemplateEngine;
         private readonly MqttFactory _mqttFactory;
         private readonly DeviceMap[] _deviceMap;
-        private IMqttClient _client;
+        private IManagedMqttClient _client;
         private CancellationTokenSource _tokenSource;
         private Thread _keepAliveThread;
 
@@ -84,46 +82,40 @@ namespace SmartFriends.Mqtt
                 _tokenSource?.Cancel();
                 _tokenSource = new CancellationTokenSource();
 
-                _client = _mqttFactory.CreateMqttClient();
+                _client = _mqttFactory.CreateManagedMqttClient();
                 _client.ConnectedHandler = new MqttClientConnectedHandlerDelegate(ConnectedHandler);
                 _client.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(DisconnectedHandler);
                 _client.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(MessageReceived);
 
-                var options = new MqttClientOptions
-                {
-                    ClientId = "ClientPublisher",
-                    ProtocolVersion = MqttProtocolVersion.V500,
-                    CleanSession = true,
-                    KeepAlivePeriod = TimeSpan.FromSeconds(5),
-                    ChannelOptions = new MqttClientTcpOptions
+                var options = new ManagedMqttClientOptionsBuilder()
+                    .WithAutoReconnectDelay(TimeSpan.FromSeconds(5))
+                    .WithClientOptions(new MqttClientOptions
                     {
-                        Server = _mqttConfig.Server,
-                        Port = _mqttConfig.Port,
-                        TlsOptions = new MqttClientTlsOptions
+                        ClientId = "ClientPublisher",
+                        ProtocolVersion = MqttProtocolVersion.V500,
+                        CleanSession = true,
+                        KeepAlivePeriod = TimeSpan.FromSeconds(5),
+                        ChannelOptions = new MqttClientTcpOptions
                         {
-                            UseTls = _mqttConfig.UseSsl,
-                            IgnoreCertificateChainErrors = true,
-                            IgnoreCertificateRevocationErrors = true,
-                            AllowUntrustedCertificates = true
+                            Server = _mqttConfig.Server,
+                            Port = _mqttConfig.Port,
+                            TlsOptions = new MqttClientTlsOptions
+                            {
+                                UseTls = _mqttConfig.UseSsl,
+                                IgnoreCertificateChainErrors = true,
+                                IgnoreCertificateRevocationErrors = true,
+                                AllowUntrustedCertificates = true
+                            }
+                        },
+                        Credentials = new MqttClientCredentials
+                        {
+                            Username = _mqttConfig.User,
+                            Password = Encoding.UTF8.GetBytes(_mqttConfig.Password)
                         }
-                    },
-                    Credentials = new MqttClientCredentials
-                    {
-                        Username = _mqttConfig.User,
-                        Password = Encoding.UTF8.GetBytes(_mqttConfig.Password)
-                    }
-                };
+                    }).Build();
 
-                var connectResult = await _client.ConnectAsync(options, CancellationToken.None);
-                if (connectResult.ResultCode != MqttClientConnectResultCode.Success)
-                {
-                    throw new Exception($"Connection returned non-success code {connectResult.ResultCode}: {connectResult.ReasonString}");
-                }
-
-                await _client.SubscribeAsync(new MqttClientSubscribeOptions
-                {
-                    TopicFilters = new List<MqttTopicFilter> {new MqttTopicFilter {Topic = $"{_mqttConfig.BaseTopic}/#"}, new MqttTopicFilter {Topic = "home-assistant"}}
-                }, CancellationToken.None);
+                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").WithTopic("home-assistant").Build());
+                await _client.StartAsync(options);
 
                 _keepAliveThread = new Thread(Keepalive);
                 _keepAliveThread.Start(_tokenSource.Token);
@@ -146,11 +138,7 @@ namespace SmartFriends.Mqtt
             try
             {
                 await UpdateStatus(false, CancellationToken.None);
-
-                await _client.DisconnectAsync(new MqttClientDisconnectOptions
-                {
-                    ReasonCode = MqttClientDisconnectReason.NormalDisconnection
-                }, CancellationToken.None);
+                await _client.StopAsync();
             }
             catch (Exception e)
             {
