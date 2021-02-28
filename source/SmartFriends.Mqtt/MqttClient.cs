@@ -91,7 +91,7 @@ namespace SmartFriends.Mqtt
                     .WithAutoReconnectDelay(TimeSpan.FromSeconds(5))
                     .WithClientOptions(new MqttClientOptions
                     {
-                        ClientId = "ClientPublisher",
+                        ClientId = "smartfriends2mqtt",
                         ProtocolVersion = MqttProtocolVersion.V500,
                         CleanSession = true,
                         KeepAlivePeriod = TimeSpan.FromSeconds(5),
