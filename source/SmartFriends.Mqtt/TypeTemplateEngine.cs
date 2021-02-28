@@ -21,7 +21,10 @@ namespace SmartFriends.Mqtt
 
         public TypeTemplateEngine(MqttConfiguration mqttConfig)
         {
-            Directory.CreateDirectory(mqttConfig.DataPath);
+            if (!string.IsNullOrWhiteSpace(mqttConfig.DataPath))
+            {
+                Directory.CreateDirectory(mqttConfig.DataPath);
+            }
             _templates = LoadTemplates(Path.Combine(mqttConfig.DataPath, TypeTemplateFile));
             _baseTopic = mqttConfig.BaseTopic;
         }

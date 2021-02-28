@@ -51,7 +51,10 @@ namespace SmartFriends.Mqtt
             _logger = logger;
             _mqttConfig = mqttConfig;
             _typeTemplateEngine = templateEngine;
-            Directory.CreateDirectory(mqttConfig.DataPath);
+            if (!string.IsNullOrWhiteSpace(mqttConfig.DataPath))
+            {
+                Directory.CreateDirectory(mqttConfig.DataPath);
+            }
             _deviceMap = LoadDeviceMap(Path.Combine(_mqttConfig.DataPath, DeviceMapFile));
             _mqttFactory = new MqttFactory();
         }

@@ -45,7 +45,10 @@ namespace SmartFriends.Mqtt
                 await Task.Delay(10, cancellationToken);
             }
 
-            Directory.CreateDirectory(_mqttConfig.DataPath);
+            if (!string.IsNullOrWhiteSpace(_mqttConfig.DataPath))
+            {
+                Directory.CreateDirectory(_mqttConfig.DataPath);
+            }
             await File.WriteAllTextAsync(Path.Combine(_mqttConfig.DataPath, DevicesFile), _smartfriendsSession.DeviceMasters.Serialize(), cancellationToken);
 
             if (cancellationToken.IsCancellationRequested) return;
