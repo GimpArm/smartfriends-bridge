@@ -89,30 +89,20 @@ namespace SmartFriends.Mqtt
 
                 var options = new ManagedMqttClientOptionsBuilder()
                     .WithAutoReconnectDelay(TimeSpan.FromSeconds(5))
-                    .WithClientOptions(new MqttClientOptions
-                    {
-                        ClientId = "smartfriends2mqtt",
-                        ProtocolVersion = MqttProtocolVersion.V500,
-                        CleanSession = true,
-                        KeepAlivePeriod = TimeSpan.FromSeconds(5),
-                        ChannelOptions = new MqttClientTcpOptions
+                    .WithClientOptions(new MqttClientOptionsBuilder()
+                        .WithClientId(Guid.NewGuid().ToString())
+                        .WithTcpServer(_mqttConfig.Server, _mqttConfig.Port)
+                        .WithCredentials(_mqttConfig.User, _mqttConfig.Password)
+                        .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
+                        .WithProtocolVersion(MqttProtocolVersion.V500)
+                        .WithTls(x =>
                         {
-                            Server = _mqttConfig.Server,
-                            Port = _mqttConfig.Port,
-                            TlsOptions = new MqttClientTlsOptions
-                            {
-                                UseTls = _mqttConfig.UseSsl,
-                                IgnoreCertificateChainErrors = true,
-                                IgnoreCertificateRevocationErrors = true,
-                                AllowUntrustedCertificates = true
-                            }
-                        },
-                        Credentials = new MqttClientCredentials
-                        {
-                            Username = _mqttConfig.User,
-                            Password = Encoding.UTF8.GetBytes(_mqttConfig.Password)
-                        }
-                    }).Build();
+                            x.UseTls = _mqttConfig.UseSsl;
+                            x.IgnoreCertificateChainErrors = true;
+                            x.IgnoreCertificateRevocationErrors = true;
+                            x.AllowUntrustedCertificates = true;
+                        }))
+                    .Build();
 
                 await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").WithTopic("home-assistant").Build());
                 await _client.StartAsync(options);
