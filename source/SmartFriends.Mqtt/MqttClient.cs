@@ -92,7 +92,7 @@ namespace SmartFriends.Mqtt
                 var options = new MqttClientOptions
                 {
                     ClientId = "ClientPublisher",
-                    ProtocolVersion = MqttProtocolVersion.V311,
+                    ProtocolVersion = MqttProtocolVersion.V500,
                     CleanSession = true,
                     KeepAlivePeriod = TimeSpan.FromSeconds(5),
                     ChannelOptions = new MqttClientTcpOptions
