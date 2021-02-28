@@ -57,6 +57,14 @@ namespace SmartFriends.Mqtt
                     {
                         {"value_template", "{{ value_json.state }}"}
                     }
+                },
+                new TypeTemplate
+                {
+                    Type = "binary_sensor",
+                    Parameters = new Dictionary<string, string>
+                    {
+                        {"value_template", "{{ value_json.state }}"}
+                    }
                 }
             };
             File.WriteAllText(path, JsonConvert.SerializeObject(template, Formatting.Indented));

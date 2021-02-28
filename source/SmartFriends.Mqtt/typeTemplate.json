@@ -17,5 +17,11 @@
     "Parameters": {
       "value_template": "{{ value_json.state }}"
     }
+  },
+  {
+    "Type": "binary_sensor",
+    "Parameters": {
+      "value_template": "{{ value_json.state }}"
+    }
   }
 ]
