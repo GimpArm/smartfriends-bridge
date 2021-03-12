@@ -1,24 +1,30 @@
-﻿using System;
+﻿using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SmartFriends.Api;
 using SmartFriends.Api.Helpers;
 using SmartFriends.Api.Models;
+using SmartFriends.Mqtt.Models;
 
 namespace SmartFriends.Mqtt
 {
     public class ApplicationService: IHostedService
     {
+        public const string DevicesFile = "devices.json";
+
         private readonly ILogger<ApplicationService> _logger;
         private readonly Session _smartfriendsSession;
+        private readonly MqttConfiguration _mqttConfig;
         private readonly MqttClient _mqttClient;
 
-        public ApplicationService(ILogger<ApplicationService> logger, Session smartfriendsSession, MqttClient mqttClient)
+        public ApplicationService(ILogger<ApplicationService> logger, Session smartfriendsSession, IOptions<MqttConfiguration> mqttConfig, MqttClient mqttClient)
         {
             _logger = logger;
             _smartfriendsSession = smartfriendsSession;
+            _mqttConfig = mqttConfig.Value;
             _mqttClient = mqttClient;
         }
 
@@ -39,7 +45,11 @@ namespace SmartFriends.Mqtt
                 await Task.Delay(10, cancellationToken);
             }
 
-            _logger.LogInformation($"=========================Device List========================={Environment.NewLine}{_smartfriendsSession.DeviceMasters.Serialize()}");
+            if (!string.IsNullOrWhiteSpace(_mqttConfig.DataPath))
+            {
+                Directory.CreateDirectory(_mqttConfig.DataPath);
+            }
+            await File.WriteAllTextAsync(Path.Combine(_mqttConfig.DataPath, DevicesFile), _smartfriendsSession.DeviceMasters.Serialize(), cancellationToken);
 
             if (cancellationToken.IsCancellationRequested) return;
 
@@ -47,6 +57,7 @@ namespace SmartFriends.Mqtt
 
             _smartfriendsSession.DeviceUpdated += DeviceUpdatedRelay;
         }
+
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {

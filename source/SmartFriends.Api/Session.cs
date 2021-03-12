@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using SmartFriends.Api.Helpers;
 
 namespace SmartFriends.Api
 {
@@ -221,9 +222,12 @@ namespace SmartFriends.Api
         {
             while (!await Open())
             {
-                if (cancellationToken.IsCancellationRequested) break;
+                while (!Ready && !cancellationToken.IsCancellationRequested)
+                {
+                    await Task.Delay(10, cancellationToken);
+                }
 
-                await Task.Delay(5000, cancellationToken);
+                _logger.LogInformation($"===================Devices==================={Environment.NewLine}{DeviceMasters.Serialize()}");
             }
         }
 

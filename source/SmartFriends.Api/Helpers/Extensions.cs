@@ -1,13 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
-using SmartFriends.Api.Models;
 
 namespace SmartFriends.Api.Helpers
 {
     public static class Extensions
     {
+        public static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore
+        };
+
+
         public static string FirstCharToUpper(this string input)
         {
             switch (input)
@@ -18,9 +23,9 @@ namespace SmartFriends.Api.Helpers
             }
         }
 
-        public static string Serialize(this List<DeviceMaster> list)
+        public static string Serialize(this object input)
         {
-            return JsonConvert.SerializeObject(list, Formatting.Indented);
+            return JsonConvert.SerializeObject(input, SerializerSettings);
         }
     }
 }

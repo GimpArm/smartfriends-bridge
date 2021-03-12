@@ -1,0 +1,49 @@
+[
+  {
+    "Id": 4358,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 10325,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 262,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 8019,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 14673,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 13103,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 6866,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 10433,
+    "Type": "cover",
+    "Class": "shutter"
+  },
+  {
+    "Id": 13711,
+    "Type": "switch",
+    "Parameters": {
+      "icon": "hass:lightbulb"
+    }
+  }
+]
