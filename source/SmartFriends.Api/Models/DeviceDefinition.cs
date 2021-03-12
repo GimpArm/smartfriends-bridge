@@ -24,5 +24,9 @@ namespace SmartFriends.Api.Models
         [JsonProperty("digitalValueOn")]
         [JsonConverter(typeof(SwitchingValueConverter))]
         public int? DigitalValueOn { get; set; }
+
+        //[JsonProperty("value")]
+        //[JsonConverter(typeof(HasHsvValueConverter))]
+        //public bool HasHsv { get; set; }
     }
 }

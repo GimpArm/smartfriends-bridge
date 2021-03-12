@@ -3,7 +3,8 @@
    <PropertyGroup>
       <TargetFramework>net50</TargetFramework>
       <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-      <DockerfileTag>smartfriends-rest-api</DockerfileTag>
+      <DockerfileTag>gimparm/amd64-smartfriends-rest-api:beta</DockerfileTag>
+      <UserSecretsId>040deadd-7ebd-479b-babc-60a5f66425ec</UserSecretsId>
    </PropertyGroup>
 
    <ItemGroup>

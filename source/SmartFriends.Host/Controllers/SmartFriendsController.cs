@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using SmartFriends.Api;
 using SmartFriends.Api.Models;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SmartFriends.Host.Controllers
@@ -53,6 +54,22 @@ namespace SmartFriends.Host.Controllers
                 return await _session.SetDeviceValue(id, boolValue);
             }
             return await _session.SetDeviceValue(id, value);
+        }
+
+        [HttpGet("{id}/{value}")]
+        public async Task<bool> Hsv(int id, string value)
+        {
+            var values = Regex.Split(value, "[^\\d]+");
+
+            if (values.Length != 3) return false;
+
+            var hsv = new HsvValue
+            {
+                H = int.Parse(values[0]),
+                S = int.Parse(values[1]),
+                V = int.Parse(values[2])
+            };
+            return await _session.SetDeviceValue(id, hsv);
         }
     }
 }

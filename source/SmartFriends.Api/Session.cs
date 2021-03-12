@@ -88,6 +88,12 @@ namespace SmartFriends.Api
 
         public async Task<bool> SetDeviceValue(int id, string value)
         {
+            var hsv = ConvertHsv(value);
+            if (hsv != null)
+            {
+                return await SetDeviceValue(id, hsv);
+            }
+
             var device = GetDevice(id);
 
             var command = device?.GetKeywordCommand(value);
@@ -96,7 +102,35 @@ namespace SmartFriends.Api
             if (!await _client.SendCommand(command)) return false;
 
             device.UpdateValue(command.Value);
+
             return true;
+        }
+
+        public async Task<bool> SetDeviceValue(int id, HsvValue value)
+        {
+            var device = GetDevice(id);
+
+            var command = device?.GetHsvCommand(value);
+            if (command == null) return false;
+
+            if (!await _client.SendCommand(command)) return false;
+
+            device.UpdateValue(command.Value);
+
+            return true;
+        }
+
+        private static HsvValue ConvertHsv(string value)
+        {
+            if (value == null || !value.StartsWith("{") || !value.EndsWith("}")) return null;
+            try
+            {
+                return JsonConvert.DeserializeObject<HsvValue>(value);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void ClientDeviceUpdated(object sender, DeviceValue value)
@@ -115,15 +149,15 @@ namespace SmartFriends.Api
             {
                 message = await _client.SendAndReceiveCommand<Message>(new GetAllNewInfos(_lastUpdate), 5000);
                 var result = message.Response;
-                _lastUpdate = result?["currentTimestamp"].Value<long>() ?? throw new Exception("Server did not respond.");
+                _lastUpdate = result?["currentTimestamp"]?.Value<long>() ?? throw new Exception("Server did not respond.");
                 if (!_definitions.Any())
                 {
-                    var definitions = result["newCompatibilityConfiguration"]["compatibleRadioStandards"].ToObject<CompatibleDevices[]>().SelectMany(x => x.Definitions);
-                    _definitions.AddRange(definitions.Where(x => x.DeviceType != null));
+                    var definitions = result["newCompatibilityConfiguration"]?["compatibleRadioStandards"]?.ToObject<CompatibleDevices[]>()?.SelectMany(x => x.Definitions);
+                    _definitions.AddRange(definitions?.Where(x => x.DeviceType != null) ?? Array.Empty<DeviceDefinition>());
                 }
-                _rooms.AddRange(result["newRoomInfos"].ToObject<RoomInfo[]>().Where(x => x.RoomName != "${Service}"));
+                _rooms.AddRange(result["newRoomInfos"]?.ToObject<RoomInfo[]>()?.Where(x => x.RoomName != "${Service}") ?? Array.Empty<RoomInfo>());
 
-                var deviceInfo = result["newDeviceInfos"].ToObject<DeviceInfo[]>();
+                var deviceInfo = result["newDeviceInfos"]?.ToObject<DeviceInfo[]>() ?? Array.Empty<DeviceInfo>();
                 Parallel.ForEach(deviceInfo, x =>
                 {
                     x.Definition = _definitions.FirstOrDefault(y => y.DeviceTypServer == x.DeviceTypServer && y.DeviceDesignation == x.DeviceDesignation);
@@ -144,7 +178,7 @@ namespace SmartFriends.Api
                     DeviceMasters.Add(master);
                 }
 
-                var values = result["newDeviceValues"].ToObject<DeviceValue[]>();
+                var values = result["newDeviceValues"]?.ToObject<DeviceValue[]>() ?? Array.Empty<DeviceValue>();
                 foreach (var value in values)
                 {
                     ClientDeviceUpdated(this, value);

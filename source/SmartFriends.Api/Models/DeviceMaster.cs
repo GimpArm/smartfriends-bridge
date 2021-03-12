@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using SmartFriends.Api.Models.Commands;
+﻿using SmartFriends.Api.Models.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +12,8 @@ namespace SmartFriends.Api.Models
         private readonly RoomInfo _room;
         private readonly DeviceInfo _controlDevice;
         private readonly DeviceInfo _analogDevice;
+        private readonly DeviceInfo _hsvDevice;
+        private readonly DeviceInfo _colorTempDevice;
 
         public int Id { get; }
 
@@ -32,6 +33,10 @@ namespace SmartFriends.Api.Models
 
         public int? AnalogValue { get; private set; }
 
+        public int? ColorTemp { get; private set; }
+
+        public HsvValue Hsv { get; private set; }
+
         public string State => _controlDevice?.Definition?.DeviceType.SwitchingValues?.FirstOrDefault(x => x.Value == ControlValue)?.Name[2..^1];
 
         public string[] Commands => _controlDevice?.Definition?.DeviceType.SwitchingValues?.Select(x => x.Name[2..^1]).ToArray();
@@ -39,6 +44,8 @@ namespace SmartFriends.Api.Models
         public int? Min => _analogDevice?.Definition.DeviceType.Min;
         public int? Max => _analogDevice?.Definition.DeviceType.Max;
         public int? StepSize => _analogDevice?.Definition.DeviceType.Step;
+        public int? ColorTempMin => _colorTempDevice?.Definition.DeviceType.Min;
+        public int? ColorTempMax => _colorTempDevice?.Definition.DeviceType.Max;
 
         public DeviceMaster(int id, RoomInfo roomInfo, IEnumerable<DeviceInfo> devices)
         {
@@ -46,7 +53,9 @@ namespace SmartFriends.Api.Models
             _devices = devices.ToArray();
             _room = roomInfo;
             _controlDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.SwitchingValues?.Any() ?? false);
-            _analogDevice = _devices.Where(x => (x.Definition?.DeviceType?.Max.HasValue ?? false) && (x.Definition?.DeviceType?.Min.HasValue ?? false)).OrderByDescending(x => x.Definition.DeviceType.Max).ThenBy(x => x.Definition.DeviceType.Min).FirstOrDefault();
+            _colorTempDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.Kind.Equals("colortemp", StringComparison.InvariantCultureIgnoreCase) ?? false);
+            _analogDevice = _devices.Where(x => x.DeviceId != (_colorTempDevice?.DeviceId ?? -1) && (x.Definition?.DeviceType?.Min.HasValue ?? false)).OrderByDescending(x => x.Definition.DeviceType.Max).ThenBy(x => x.Definition.DeviceType.Min).FirstOrDefault();
+            _hsvDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.Kind.Equals("hsv", StringComparison.InvariantCultureIgnoreCase) ?? false);
             Name = _controlDevice?.MasterDeviceName;
         }
 
@@ -57,6 +66,11 @@ namespace SmartFriends.Api.Models
 
         public SetDeviceValue GetAnalogCommand(int value)
         {
+            if (_colorTempDevice != null && ColorTempMax.HasValue && value <= ColorTempMax && ColorTempMin.HasValue && value >= ColorTempMin)
+            {
+                return new SetDeviceValue(_colorTempDevice.DeviceId, value);
+            }
+
             if (_analogDevice == null)
             {
                 return GetDigitalCommand(value > 0);
@@ -83,17 +97,34 @@ namespace SmartFriends.Api.Models
             return null;
         }
 
+        public SetDeviceHsvValue GetHsvCommand(HsvValue value)
+        {
+            return _hsvDevice != null ? new SetDeviceHsvValue(_hsvDevice.DeviceId, value) : null;
+        }
+
         public bool SetValues(params DeviceValue[] values)
         {
             if (!values?.Any() ?? true) return false;
             var updated = false;
+
+            if (_hsvDevice != null)
+            {
+                var hsv = values.FirstOrDefault(x => x.DeviceID == _hsvDevice.DeviceId);
+                if (hsv?.Value.IsHsv ?? false)
+                {
+                    Hsv = (HsvValue) hsv.Value.Value;
+                    ColorTemp = null;
+                    updated = true;
+                }
+            }
 
             if (_controlDevice != null)
             {
                 var control = values.FirstOrDefault(x => x.DeviceID == _controlDevice.DeviceId);
                 if (control != null)
                 {
-                    var newValue = control.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(control.Value);
+                    //var newValue = control.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(control.Value);
+                    var newValue = Convert.ToInt32(control.Value.Value);
                     if (newValue != ControlValue)
                     {
                         ControlValue = newValue;
@@ -102,20 +133,46 @@ namespace SmartFriends.Api.Models
                 }
             }
 
+            if (_colorTempDevice != null)
+            {
+                var temp = values.FirstOrDefault(x => x.DeviceID == _colorTempDevice.DeviceId);
+                if (temp != null)
+                {
+                    ColorTemp = Convert.ToInt32(temp.Value.Value);
+                    Hsv = null;
+                    updated = true;
+                }
+            }
+
             if (_analogDevice == null) return updated;
 
             var analog = values.FirstOrDefault(x => x.DeviceID == _analogDevice.DeviceId);
             if (analog != null)
             {
-                AnalogValue = analog.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(analog.Value);
+                //AnalogValue = analog.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(analog.Value);
+                AnalogValue = Convert.ToInt32(analog.Value.Value);
                 return true;
             }
 
             return updated;
         }
 
+        public void UpdateValue(HsvValue value)
+        {
+            Hsv = value;
+            ColorTemp = null;
+        }
+
         public void UpdateValue(int value)
         {
+            //probably a color temp.
+            if (_colorTempDevice != null && ColorTempMax.HasValue && value <= ColorTempMax && ColorTempMin.HasValue && value >= ColorTempMin)
+            {
+                ColorTemp = value;
+                Hsv = null;
+                return;
+            }
+
             //probably a switching command
             if (_controlDevice.Definition.DeviceType.SwitchingValues.Any(x => x.Value == value))
             {

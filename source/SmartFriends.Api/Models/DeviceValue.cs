@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SmartFriends.Api.JsonConvertes;
 
 namespace SmartFriends.Api.Models
 {
@@ -14,7 +15,8 @@ namespace SmartFriends.Api.Models
         public int MasterDeviceID { get; set; }
 
         [JsonProperty("value")]
-        public object Value { get; set; }
+        [JsonConverter(typeof(HsvValueConverter))]
+        public FuzzyValue Value { get; set; }
 
         [JsonProperty("valueTimestamp")]
         public long ValueTimestamp { get; set; }
