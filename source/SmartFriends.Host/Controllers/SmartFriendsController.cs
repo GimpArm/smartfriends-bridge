@@ -30,6 +30,12 @@ namespace SmartFriends.Host.Controllers
         }
 
         [HttpGet]
+        public object Raw()
+        {
+            return _session.RawDevices;
+        }
+
+        [HttpGet]
         public IEnumerable<string> Log()
         {
             return MemoryLogger.LogList;
