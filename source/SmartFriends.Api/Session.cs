@@ -52,7 +52,7 @@ namespace SmartFriends.Api
             }
             catch(Exception e)
             {
-                _logger.LogError(e, "Failed to open conneciton");
+                _logger.LogError(e, "Failed to open connection");
                 return false;
             }
         }
@@ -62,82 +62,63 @@ namespace SmartFriends.Api
             return DeviceMasters.FirstOrDefault(x => x.Id == id);
         }
 
-        public async Task<bool> SetDeviceValue(int id, bool value)
+        public async Task<bool> SetDeviceValue(int id, string kind,  bool value)
         {
             var device = GetDevice(id);
 
-            var command = device?.GetDigitalCommand(value);
+            var command = device?.GetDigitalCommand(kind, value);
             if (command == null) return false;
 
             if (!await _client.SendCommand(command)) return false;
 
-            device.UpdateValue(command.Value);
+            device.UpdateValue(kind, command.Value);
             return true;
         }
 
-        public async Task<bool> SetDeviceValue(int id, int value)
+        public async Task<bool> SetDeviceValue(int id, string kind, int value)
         {
             var device = GetDevice(id);
 
-            var command = device?.GetAnalogCommand(value);
+            var command = device?.GetAnalogCommand(kind, value);
             if (command == null) return false;
 
             if (!await _client.SendCommand(command)) return false;
 
-            device.UpdateValue(command.Value);
+            device.UpdateValue(kind, command.Value);
             return true;
         }
 
-        public async Task<bool> SetDeviceValue(int id, string value)
+        public async Task<bool> SetDeviceValue(int id, string kind, string value)
         {
-            var hsv = ConvertHsv(value);
-            if (hsv != null)
-            {
-                return await SetDeviceValue(id, hsv);
-            }
-
             var device = GetDevice(id);
 
-            var command = device?.GetKeywordCommand(value);
+            var command = device?.GetKeywordCommand(kind, value);
             if (command == null) return false;
 
             if (!await _client.SendCommand(command)) return false;
 
-            device.UpdateValue(command.Value);
+            device.UpdateValue(kind, command.Value);
 
             return true;
         }
 
-        public async Task<bool> SetDeviceValue(int id, HsvValue value)
+        public async Task<bool> SetDeviceValue(int id, string kind, HsvValue value)
         {
             var device = GetDevice(id);
 
-            var command = device?.GetHsvCommand(value);
+            var command = device?.GetHsvCommand(kind, value);
             if (command == null) return false;
 
             if (!await _client.SendCommand(command)) return false;
 
-            device.UpdateValue(command.Value);
+            device.UpdateValue(kind, command.Value);
 
             return true;
-        }
-
-        private static HsvValue ConvertHsv(string value)
-        {
-            if (value == null || !value.StartsWith("{") || !value.EndsWith("}")) return null;
-            try
-            {
-                return JsonConvert.DeserializeObject<HsvValue>(value);
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         private void ClientDeviceUpdated(object sender, DeviceValue value)
         {
-            var device = GetDevice(value.MasterDeviceID);
+            var device = GetDevice(value.MasterDeviceId);
             if (device?.SetValues(value) ?? false)
             {
                 DeviceUpdated?.Invoke(this, value);

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using SmartFriends.Api.JsonConvertes;
 
 namespace SmartFriends.Api.Models
 {
@@ -14,7 +15,12 @@ namespace SmartFriends.Api.Models
         public string Model { get; set; }
 
         [JsonProperty("switchingValues")]
+        //[JsonConverter(typeof(SwitchingValueConverter))]
         public SwitchingValue[] SwitchingValues { get; set; }
+
+        [JsonProperty("TextOptions")]
+        [JsonConverter(typeof(TextOptionArrayConverter))]
+        public TextOption[] TextOptions { get; set; }
 
         [JsonProperty("max")]
         public int? Max { get; set; }

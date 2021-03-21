@@ -247,7 +247,7 @@ namespace SmartFriends.Api
         {
             return JsonConvert.DeserializeObject<T>(input, new JsonSerializerSettings
             {
-                Converters = new JsonConverter[]{ new SwitchingValueConverter(), new HasHsvValueConverter(), new HsvValueConverter(),  }
+                Converters = new JsonConverter[]{ new BooleanNumberConverter(), new TextOptionArrayConverter(), new HasHsvValueConverter(), new HsvValueConverter() }
             });
         }
     }

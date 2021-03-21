@@ -9,7 +9,7 @@ namespace SmartFriends.Api.JsonConvertes
         public override bool CanConvert(Type objectType) => objectType == typeof(bool);
         public override bool CanWrite => false;
 
-        public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null) return false;
 
@@ -21,7 +21,7 @@ namespace SmartFriends.Api.JsonConvertes
             return false;
         }
 
-        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
         }

@@ -1,17 +1,16 @@
-﻿using Newtonsoft.Json;
-using System;
-using SmartFriends.Api.Models;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace SmartFriends.Api.JsonConvertes
 {
-    public class SwitchingValueConverter : JsonConverter
+    public class BooleanNumberConverter : JsonConverter
     {
-        public override bool CanConvert(Type objectType) => objectType == typeof(SwitchingValue);
+        public override bool CanConvert(Type objectType) => objectType == typeof(int?);
         public override bool CanWrite => false;
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null) return 0;
+            if (reader.TokenType == JsonToken.Null) return null;
 
             switch (reader.Value.ToString().ToLower().Trim())
             {

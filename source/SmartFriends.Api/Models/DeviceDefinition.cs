@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 using SmartFriends.Api.JsonConvertes;
 
 namespace SmartFriends.Api.Models
@@ -25,8 +26,7 @@ namespace SmartFriends.Api.Models
         [JsonConverter(typeof(SwitchingValueConverter))]
         public int? DigitalValueOn { get; set; }
 
-        //[JsonProperty("value")]
-        //[JsonConverter(typeof(HasHsvValueConverter))]
-        //public bool HasHsv { get; set; }
+        [JsonProperty("hidden")]
+        public Dictionary<string, bool> Hidden { get; set; }
     }
 }

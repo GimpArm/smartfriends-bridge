@@ -47,35 +47,47 @@ namespace SmartFriends.Host.Controllers
             return _session.GetDevice(id);
         }
 
-        [HttpGet("{id}/{value}")]
-        public async Task<bool> Set(int id, string value)
+        [HttpGet("{id}/{kind}")]
+        public DeviceTypeProxy Get(int id, string kind)
         {
+            var master = _session.GetDevice(id);
+            if (master == null || !master.Devices.ContainsKey(kind)) return null;
+
+            return master.Devices[kind];
+        }
+
+        [HttpGet("{id}/{kind}/{value?}")]
+        public async Task<bool> Set(int id, string kind, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                value = kind;
+                kind = null;
+            }
+
             _logger.LogInformation($"Set: {id}: {value}");
+
+            var values = Regex.Split(value, "[^\\d]+");
+            if (values.Length == 3)
+            {
+                var hsv = new HsvValue
+                {
+                    H = int.Parse(values[0]),
+                    S = int.Parse(values[1]),
+                    V = int.Parse(values[2])
+                };
+                return await _session.SetDeviceValue(id, kind, hsv);
+            }
+
             if (int.TryParse(value, out var intValue))
             {
-                return await _session.SetDeviceValue(id, intValue);
+                return await _session.SetDeviceValue(id, kind, intValue);
             }
             if (bool.TryParse(value, out var boolValue))
             {
-                return await _session.SetDeviceValue(id, boolValue);
+                return await _session.SetDeviceValue(id, kind, boolValue);
             }
-            return await _session.SetDeviceValue(id, value);
-        }
-
-        [HttpGet("{id}/{value}")]
-        public async Task<bool> Hsv(int id, string value)
-        {
-            var values = Regex.Split(value, "[^\\d]+");
-
-            if (values.Length != 3) return false;
-
-            var hsv = new HsvValue
-            {
-                H = int.Parse(values[0]),
-                S = int.Parse(values[1]),
-                V = int.Parse(values[2])
-            };
-            return await _session.SetDeviceValue(id, hsv);
+            return await _session.SetDeviceValue(id, kind, value);
         }
     }
 }

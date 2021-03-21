@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SmartFriends.Api;
+using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 
 namespace SmartFriends.Host
@@ -30,6 +32,7 @@ namespace SmartFriends.Host
             {
                 x.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
                 x.SerializerSettings.Formatting = Formatting.Indented;
+                x.SerializerSettings.Converters = new List<JsonConverter> {new FuzzyValueConverter()};
             });
         }
 

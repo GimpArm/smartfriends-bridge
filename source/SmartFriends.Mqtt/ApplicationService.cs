@@ -71,19 +71,19 @@ namespace SmartFriends.Mqtt
         {
             if (int.TryParse(payload, out var intValue))
             {
-                await _smartfriendsSession.SetDeviceValue(deviceId, intValue);
+                await _smartfriendsSession.SetDeviceValue(deviceId, "", intValue);
             }
             if (bool.TryParse(payload, out var boolValue))
             {
-                await _smartfriendsSession.SetDeviceValue(deviceId, boolValue);
+                await _smartfriendsSession.SetDeviceValue(deviceId, "", boolValue);
             }
 
-            await _smartfriendsSession.SetDeviceValue(deviceId, payload);
+            await _smartfriendsSession.SetDeviceValue(deviceId, "", payload);
         }
 
         private void DeviceUpdatedRelay(object sender, DeviceValue value)
         {
-            _mqttClient.DeviceUpdated(_smartfriendsSession.GetDevice(value.MasterDeviceID), value).GetAwaiter().GetResult();
+            _mqttClient.DeviceUpdated(_smartfriendsSession.GetDevice(value.MasterDeviceId), value).GetAwaiter().GetResult();
         }
     }
 }

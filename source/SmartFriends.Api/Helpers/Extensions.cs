@@ -23,6 +23,11 @@ namespace SmartFriends.Api.Helpers
             }
         }
 
+        public static string RemoveLanguageLookup(this string input)
+        {
+            return input.StartsWith("${") ? input[2..^1] : input;
+        }
+
         public static string Serialize(this object input)
         {
             return JsonConvert.SerializeObject(input, SerializerSettings);

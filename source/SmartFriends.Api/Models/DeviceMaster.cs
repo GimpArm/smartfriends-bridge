@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json;
 using SmartFriends.Api.Helpers;
+using SmartFriends.Api.JsonConvertes;
 
 namespace SmartFriends.Api.Models
 {
@@ -10,96 +12,81 @@ namespace SmartFriends.Api.Models
     {
         private readonly DeviceInfo[] _devices;
         private readonly RoomInfo _room;
-        private readonly DeviceInfo _controlDevice;
-        private readonly DeviceInfo _analogDevice;
-        private readonly DeviceInfo _hsvDevice;
-        private readonly DeviceInfo _colorTempDevice;
+        private readonly DeviceInfo _defaultDevice;
 
         public int Id { get; }
 
-        public string Name { get; }
+        public string Name => _defaultDevice.MasterDeviceName;
 
         public string Room => _room?.GetCleanName() ?? "Unknown";
 
         public string GatewayDevice { get; set; }
 
-        public string Kind => _controlDevice?.Definition?.DeviceType?.Kind?.FirstCharToUpper();
+        public string Kind => Devices.Keys.FirstOrDefault()?.FirstCharToUpper();
+        public string Manufacturer => _defaultDevice.Manufacturer;
+        public string Model => _defaultDevice.ProductDesignation;
 
-        public string Manufacturer => _controlDevice?.Manufacturer;
+        [JsonConverter(typeof(FuzzyValueConverter))]
+        public FuzzyValue State
+        {
+            get
+            {
+                try
+                {
+                    return Devices[_defaultDevice.Definition.DeviceType.Kind].CurrentValue;
+                }
+                catch
+                {
+                    return Devices.First().Value.CurrentValue;
+                }
+            }
+        }
 
-        public string Model => _controlDevice?.ProductDesignation;
-
-        public int ControlValue { get; private set; }
-
-        public int? AnalogValue { get; private set; }
-
-        public int? ColorTemp { get; private set; }
-
-        public HsvValue Hsv { get; private set; }
-
-        public string State => _controlDevice?.Definition?.DeviceType.SwitchingValues?.FirstOrDefault(x => x.Value == ControlValue)?.Name[2..^1];
-
-        public string[] Commands => _controlDevice?.Definition?.DeviceType.SwitchingValues?.Select(x => x.Name[2..^1]).ToArray();
-
-        public int? Min => _analogDevice?.Definition.DeviceType.Min;
-        public int? Max => _analogDevice?.Definition.DeviceType.Max;
-        public int? StepSize => _analogDevice?.Definition.DeviceType.Step;
-        public int? ColorTempMin => _colorTempDevice?.Definition.DeviceType.Min;
-        public int? ColorTempMax => _colorTempDevice?.Definition.DeviceType.Max;
+        public Dictionary<string, DeviceTypeProxy> Devices { get; }
 
         public DeviceMaster(int id, RoomInfo roomInfo, IEnumerable<DeviceInfo> devices)
         {
             Id = id;
             _devices = devices.ToArray();
+            Devices = new Dictionary<string, DeviceTypeProxy>(_devices
+                    .Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) && (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"]))
+                    .ToDictionary(k => k.Definition.DeviceType.Kind, v => new DeviceTypeProxy(v)),
+                StringComparer.OrdinalIgnoreCase);
             _room = roomInfo;
-            _controlDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.SwitchingValues?.Any() ?? false);
-            _colorTempDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.Kind.Equals("colortemp", StringComparison.InvariantCultureIgnoreCase) ?? false);
-            _analogDevice = _devices.Where(x => x.DeviceId != (_colorTempDevice?.DeviceId ?? -1) && (x.Definition?.DeviceType?.Min.HasValue ?? false)).OrderByDescending(x => x.Definition.DeviceType.Max).ThenBy(x => x.Definition.DeviceType.Min).FirstOrDefault();
-            _hsvDevice = _devices.FirstOrDefault(x => x.Definition?.DeviceType?.Kind.Equals("hsv", StringComparison.InvariantCultureIgnoreCase) ?? false);
-            Name = _controlDevice?.MasterDeviceName;
+            _defaultDevice = _devices.FirstOrDefault(x =>
+                                 !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) &&
+                                 x.Definition.DeviceType.SwitchingValues != null) ?? _devices.First();
         }
 
-        public SetDeviceValue GetDigitalCommand(bool on)
+        public SetDeviceValue GetDigitalCommand(string kind, bool on)
         {
-            return GetKeywordCommand(on ? "on" : "off");
+            return GetKeywordCommand(kind, on ? "on" : "off");
         }
 
-        public SetDeviceValue GetAnalogCommand(int value)
+        public SetDeviceValue GetAnalogCommand(string kind, int value)
         {
-            if (_colorTempDevice != null && ColorTempMax.HasValue && value <= ColorTempMax && ColorTempMin.HasValue && value >= ColorTempMin)
-            {
-                return new SetDeviceValue(_colorTempDevice.DeviceId, value);
-            }
+            kind ??= Kind;
+            if (!Devices.ContainsKey(kind)) return null;
 
-            if (_analogDevice == null)
-            {
-                return GetDigitalCommand(value > 0);
-            }
-            if (Max.HasValue && value > Max)
-            {
-                value = Max.Value;
-            }
-            if (Min.HasValue && value < Min)
-            {
-                value = Min.Value;
-            }
-            return new SetDeviceValue(_analogDevice.DeviceId, value);
+            return new SetDeviceValue(Devices[kind].Id, value);
         }
 
-        public SetDeviceValue GetKeywordCommand(string keyword)
+        public SetDeviceValue GetKeywordCommand(string kind, string keyword)
         {
-            var name = $"${{{keyword}}}";
-            var value = _controlDevice.Definition.DeviceType.SwitchingValues.FirstOrDefault(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))?.Value;
-            if (value.HasValue)
-            {
-                return new SetDeviceValue(_controlDevice.DeviceId, value.Value);
-            }
-            return null;
+            kind ??= Kind;
+            if (!Devices.ContainsKey(kind) || Devices[kind].Commands == null || !Devices[kind].Commands.ContainsKey(keyword)) return null;
+
+            var value = Devices[kind].Commands[keyword];
+
+            return new SetDeviceValue(Devices[kind].Id, value);
         }
 
-        public SetDeviceHsvValue GetHsvCommand(HsvValue value)
+        public SetDeviceHsvValue GetHsvCommand(string kind, HsvValue value)
         {
-            return _hsvDevice != null ? new SetDeviceHsvValue(_hsvDevice.DeviceId, value) : null;
+            kind ??= Kind;
+            if (!Devices.ContainsKey(kind)) return null;
+
+            return new SetDeviceHsvValue(Devices[kind].Id, value);
         }
 
         public bool SetValues(params DeviceValue[] values)
@@ -107,92 +94,24 @@ namespace SmartFriends.Api.Models
             if (!values?.Any() ?? true) return false;
             var updated = false;
 
-            if (_hsvDevice != null)
+            foreach (var value in values)
             {
-                var hsv = values.FirstOrDefault(x => x.DeviceID == _hsvDevice.DeviceId);
-                if (hsv?.Value.IsHsv ?? false)
-                {
-                    Hsv = (HsvValue) hsv.Value.Value;
-                    ColorTemp = null;
-                    updated = true;
-                }
-            }
+                var device = Devices.Select(x => x.Value).FirstOrDefault(x => x.Id == value.DeviceId);
+                if (device == null) continue;
 
-            if (_controlDevice != null)
-            {
-                var control = values.FirstOrDefault(x => x.DeviceID == _controlDevice.DeviceId);
-                if (control != null)
-                {
-                    //var newValue = control.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(control.Value);
-                    var newValue = Convert.ToInt32(control.Value.Value);
-                    if (newValue != ControlValue)
-                    {
-                        ControlValue = newValue;
-                        updated = true;
-                    }
-                }
-            }
-
-            if (_colorTempDevice != null)
-            {
-                var temp = values.FirstOrDefault(x => x.DeviceID == _colorTempDevice.DeviceId);
-                if (temp != null)
-                {
-                    ColorTemp = Convert.ToInt32(temp.Value.Value);
-                    Hsv = null;
-                    updated = true;
-                }
-            }
-
-            if (_analogDevice == null) return updated;
-
-            var analog = values.FirstOrDefault(x => x.DeviceID == _analogDevice.DeviceId);
-            if (analog != null)
-            {
-                //AnalogValue = analog.Value is JObject jobj ? jobj["current"].Value<int>() : Convert.ToInt32(analog.Value);
-                AnalogValue = Convert.ToInt32(analog.Value.Value);
-                return true;
+                device.SetValue(value.Value);
+                updated = true;
             }
 
             return updated;
         }
 
-        public void UpdateValue(HsvValue value)
+        public void UpdateValue(string kind, object value)
         {
-            Hsv = value;
-            ColorTemp = null;
-        }
+            kind ??= Kind;
+            if (!Devices.ContainsKey(kind)) return;
 
-        public void UpdateValue(int value)
-        {
-            //probably a color temp.
-            if (_colorTempDevice != null && ColorTempMax.HasValue && value <= ColorTempMax && ColorTempMin.HasValue && value >= ColorTempMin)
-            {
-                ColorTemp = value;
-                Hsv = null;
-                return;
-            }
-
-            //probably a switching command
-            if (_controlDevice.Definition.DeviceType.SwitchingValues.Any(x => x.Value == value))
-            {
-                if (value == 1 || value == 0)
-                {
-                    ControlValue = value;
-                    return;
-                }
-                //probably a toggle but could be anything like a stop. It doesn't matter too much if we're wrong it will be refreshed.
-                if (value == 2)
-                {
-                    ControlValue = ControlValue == 0 ? 1 : 0;
-                    return;
-                }
-            }
-
-            //Anything else just set the analog value if there is one.
-            if (_analogDevice == null) return;
-
-            AnalogValue = value;
+            Devices[kind].SetValue(new FuzzyValue(value));
         }
     }
 }

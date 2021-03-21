@@ -9,10 +9,10 @@ namespace SmartFriends.Api.Models
         public int Counter { get; set; }
 
         [JsonProperty("deviceID")]
-        public int DeviceID { get; set; }
+        public int DeviceId { get; set; }
 
         [JsonProperty("MasterDeviceID")]
-        public int MasterDeviceID { get; set; }
+        public int MasterDeviceId { get; set; }
 
         [JsonProperty("value")]
         [JsonConverter(typeof(HsvValueConverter))]

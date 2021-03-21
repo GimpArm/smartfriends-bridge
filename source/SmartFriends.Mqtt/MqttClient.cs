@@ -199,7 +199,7 @@ namespace SmartFriends.Mqtt
 
         public async Task DeviceUpdated(DeviceMaster deviceInfo, DeviceValue value)
         {
-            var device = _deviceMap.FirstOrDefault(x => x.Id == value.MasterDeviceID);
+            var device = _deviceMap.FirstOrDefault(x => x.Id == value.MasterDeviceId);
             if (device == null) return;
 
             await _client.PublishAsync(new MqttApplicationMessage
