@@ -53,11 +53,9 @@ namespace SmartFriends.Api.Models
                                                        (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"])))
             {
                 var kind = device.Definition.DeviceType.Kind;
-                var cnt = 0;
-                while (Devices.ContainsKey(kind))
+                if (Devices.ContainsKey(kind))
                 {
-                    cnt++;
-                    kind = $"{device.Definition.DeviceType.Kind}_{cnt}";
+                    kind = $"{device.Definition.DeviceType.Kind}_{device.DeviceId}";
                 }
 
                 Devices.Add(kind, new DeviceTypeProxy(device));
