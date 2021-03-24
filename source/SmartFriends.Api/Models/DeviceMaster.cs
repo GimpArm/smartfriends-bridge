@@ -37,7 +37,7 @@ namespace SmartFriends.Api.Models
                 }
                 catch
                 {
-                    return Devices.First().Value.CurrentValue;
+                    return Devices.Any() ? Devices.First().Value.CurrentValue : null;
                 }
             }
         }
