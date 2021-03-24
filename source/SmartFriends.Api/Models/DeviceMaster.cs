@@ -48,10 +48,21 @@ namespace SmartFriends.Api.Models
         {
             Id = id;
             _devices = devices.ToArray();
-            Devices = new Dictionary<string, DeviceTypeProxy>(_devices
-                    .Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) && (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"]))
-                    .ToDictionary(k => k.Definition.DeviceType.Kind, v => new DeviceTypeProxy(v)),
-                StringComparer.OrdinalIgnoreCase);
+            Devices = new Dictionary<string, DeviceTypeProxy>(StringComparer.OrdinalIgnoreCase);
+            foreach (var device in _devices.Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) &&
+                                                       (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"])))
+            {
+                var kind = device.Definition.DeviceType.Kind;
+                var cnt = 0;
+                while (Devices.ContainsKey(kind))
+                {
+                    cnt++;
+                    kind = $"{device.Definition.DeviceType.Kind}_{cnt}";
+                }
+
+                Devices.Add(kind, new DeviceTypeProxy(device));
+            }
+
             _room = roomInfo;
             _defaultDevice = _devices.FirstOrDefault(x =>
                                  !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) &&
