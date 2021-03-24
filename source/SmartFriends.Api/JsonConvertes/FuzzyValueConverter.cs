@@ -37,6 +37,7 @@ namespace SmartFriends.Api.JsonConvertes
             writer.WriteValue(hsvValue?.S);
             writer.WritePropertyName("v");
             writer.WriteValue(hsvValue?.V);
+            writer.WriteEndObject();
         }
     }
 }
