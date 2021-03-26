@@ -54,7 +54,7 @@ namespace SmartFriends.Api.Models
                 .GroupBy(x => x.Definition.DeviceType.Kind))
             {
                 var kind = device.Key;
-                var deviceArray = device.OrderBy(x => x.DeviceId).ToArray();
+                var deviceArray = device.OrderBy(x => x.DeviceDesignation).ThenBy(x => x.DeviceId).ToArray();
                 if (deviceArray.Length == 1)
                 {
                     Devices.Add(kind, new DeviceTypeProxy(deviceArray[0]));
