@@ -14,6 +14,8 @@ namespace SmartFriends.Api.Models
         public DeviceTypeProxy(DeviceInfo device)
         {
             Id = device.DeviceId;
+            Description = device.DeviceDesignation?.RemoveLanguageLookup();
+
             var typeInfo = device.Definition?.DeviceType;
             if (typeInfo == null) return;
 
@@ -28,6 +30,9 @@ namespace SmartFriends.Api.Models
 
         [JsonProperty("Id")]
         public int Id { get; }
+
+        [JsonProperty("description")]
+        public string Description { get; set; }
 
         [JsonProperty("commands")]
         public Dictionary<string, int> Commands { get; }
