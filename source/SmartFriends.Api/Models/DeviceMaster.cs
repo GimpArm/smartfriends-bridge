@@ -50,15 +50,22 @@ namespace SmartFriends.Api.Models
             _devices = devices.ToArray();
             Devices = new Dictionary<string, DeviceTypeProxy>(StringComparer.OrdinalIgnoreCase);
             foreach (var device in _devices.Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) &&
-                                                       (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"])))
+                                                       (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"]))
+                .GroupBy(x => x.Definition.DeviceType.Kind))
             {
-                var kind = device.Definition.DeviceType.Kind;
-                if (Devices.ContainsKey(kind))
+                var kind = device.Key;
+                var deviceArray = device.OrderBy(x => x.DeviceId).ToArray();
+                if (deviceArray.Length == 1)
                 {
-                    kind = $"{device.Definition.DeviceType.Kind}_{device.DeviceId}";
+                    Devices.Add(kind, new DeviceTypeProxy(deviceArray[0]));
                 }
-
-                Devices.Add(kind, new DeviceTypeProxy(device));
+                else
+                {
+                    for (var i = 0; i < deviceArray.Length; ++i)
+                    {
+                        Devices.Add($"{kind}{i + 1}", new DeviceTypeProxy(deviceArray[i]));
+                    }
+                }
             }
 
             _room = roomInfo;
