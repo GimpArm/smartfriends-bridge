@@ -3,25 +3,14 @@
     "Type": "cover",
     "Class": "shutter",
     "Parameters": {
-      "value_template": "{{ 100 - value_json.analogValue }}",
-      "position_topic": "{baseTopic}/{deviceId}",
-      "set_position_topic": "{baseTopic}/{deviceId}/set",
+      "command_topic": "{baseTopic}/{deviceId}/rollingShutter/set",
+      "value_template": "{{ 100 - value }}",
+      "position_topic": "{baseTopic}/{deviceId}/position",
+      "set_position_topic": "{baseTopic}/{deviceId}/position/set",
       "set_position_template": "{{ 100 - position }}",
       "payload_stop": "Stop",
       "payload_open": "Up",
       "payload_close": "Down"
-    }
-  },
-  {
-    "Type": "switch",
-    "Parameters": {
-      "value_template": "{{ value_json.state }}"
-    }
-  },
-  {
-    "Type": "binary_sensor",
-    "Parameters": {
-      "value_template": "{{ value_json.state }}"
     }
   }
 ]

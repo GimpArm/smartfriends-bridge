@@ -16,6 +16,7 @@ using MQTTnet.Formatter;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 using SmartFriends.Mqtt.Models;
 
@@ -28,7 +29,8 @@ namespace SmartFriends.Mqtt
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore,
-            ContractResolver = new CamelCasePropertyNamesContractResolver()
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            Converters = new List<JsonConverter> { new FuzzyValueConverter() }
         };
         private static readonly JsonSerializer Serializer = JsonSerializer.Create(SerializerSettings);
         private const string IdPrefix = "sf_";
@@ -42,7 +44,7 @@ namespace SmartFriends.Mqtt
         private CancellationTokenSource _tokenSource;
         private Thread _keepAliveThread;
 
-        public Func<int, string, Task> RelayAction { get; set; }
+        public Func<int, string, string, Task> RelayAction { get; set; }
 
         public MqttClient(MqttConfiguration mqttConfig, ILogger logger, TypeTemplateEngine templateEngine)
         {
@@ -89,19 +91,7 @@ namespace SmartFriends.Mqtt
 
                 var options = new ManagedMqttClientOptionsBuilder()
                     .WithAutoReconnectDelay(TimeSpan.FromSeconds(5))
-                    .WithClientOptions(new MqttClientOptionsBuilder()
-                        .WithClientId(Guid.NewGuid().ToString())
-                        .WithTcpServer(_mqttConfig.Server, _mqttConfig.Port)
-                        .WithCredentials(_mqttConfig.User, _mqttConfig.Password)
-                        .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
-                        .WithProtocolVersion(MqttProtocolVersion.V500)
-                        .WithTls(x =>
-                        {
-                            x.UseTls = _mqttConfig.UseSsl;
-                            x.IgnoreCertificateChainErrors = true;
-                            x.IgnoreCertificateRevocationErrors = true;
-                            x.AllowUntrustedCertificates = true;
-                        }))
+                    .WithClientOptions(ClientOptions())
                     .Build();
 
                 await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").WithTopic("home-assistant").Build());
@@ -119,6 +109,27 @@ namespace SmartFriends.Mqtt
                 _logger.LogError(e, $"Failed connection to mqtt{(_mqttConfig.UseSsl ? "s" : string.Empty)}://{_mqttConfig.Server}:{_mqttConfig.Port}");
                 return false;
             }
+        }
+
+        private MqttClientOptionsBuilder ClientOptions()
+        {
+            var options = new MqttClientOptionsBuilder()
+                .WithClientId(Guid.NewGuid().ToString())
+                .WithTcpServer(_mqttConfig.Server, _mqttConfig.Port)
+                .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
+                .WithProtocolVersion(MqttProtocolVersion.V500)
+                .WithTls(x =>
+                {
+                    x.UseTls = _mqttConfig.UseSsl;
+                    x.IgnoreCertificateChainErrors = true;
+                    x.IgnoreCertificateRevocationErrors = true;
+                    x.AllowUntrustedCertificates = true;
+                });
+            if (!string.IsNullOrEmpty(_mqttConfig.User))
+            {
+                options = options.WithCredentials(_mqttConfig.User, _mqttConfig.Password);
+            }
+            return options;
         }
 
         public async Task Close()
@@ -150,13 +161,14 @@ namespace SmartFriends.Mqtt
 
                 var name = $"{device.Room} {device.Name}".Trim();
                 var deviceId = $"{IdPrefix}{device.Id}";
+                //TODO device.Devices.
 
                 var payload = JObject.FromObject(new DeviceRegistration
                 {
                     Name = name,
                     CommandTopic = $"{_mqttConfig.BaseTopic}/{deviceId}/set",
                     JsonAttributesTopic = $"{_mqttConfig.BaseTopic}/{deviceId}",
-                    StateTopic = $"{_mqttConfig.BaseTopic}/{deviceId}",
+                    StateTopic = $"{_mqttConfig.BaseTopic}/{deviceId}/state",
                     Availability = new Availability
                     {
                         Topic = $"{_mqttConfig.BaseTopic}/bridge/state"
@@ -170,8 +182,7 @@ namespace SmartFriends.Mqtt
                         ViaDevice = device.GatewayDevice
                     },
                     DeviceClass = map.Class,
-                    UniqueId = $"{deviceId}_{map.Type}_{_mqttConfig.BaseTopic}",
-                    ValueTemplate = "{{ value_json.controlValue }}"
+                    UniqueId = $"{deviceId}_{map.Type}_{_mqttConfig.BaseTopic}"
                 }, Serializer);
 
                 _typeTemplateEngine.Merge(payload, map, deviceId);
@@ -204,11 +215,18 @@ namespace SmartFriends.Mqtt
 
             await _client.PublishAsync(new MqttApplicationMessage
             {
-                Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}",
-                ContentType = "application/json",
+                Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/state",
+                ContentType = "text/plain",
                 Retain = true,
-                Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(deviceInfo, SerializerSettings))
-            }, CancellationToken.None);
+                Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(deviceInfo.State, SerializerSettings))
+            });
+            await _client.PublishAsync(deviceInfo.Devices.Where(x => x.Value.CurrentValue != null).Select(x => new MqttApplicationMessage
+            {
+                Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/{x.Key}",
+                ContentType = "text/plain",
+                Retain = true,
+                Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(x.Value.CurrentValue, SerializerSettings))
+            }));
         }
 
         private void ConnectedHandler(MqttClientConnectedEventArgs e)
@@ -226,17 +244,19 @@ namespace SmartFriends.Mqtt
             if (!e.ApplicationMessage.Topic.StartsWith($"{_mqttConfig.BaseTopic}/{IdPrefix}")) return;
 
             var topicParts = e.ApplicationMessage.Topic.Split("/");
-            if (topicParts.Length != 3) return;
+            if (topicParts.Length < 3 || !topicParts.Last().Equals("set", StringComparison.InvariantCultureIgnoreCase)) return;
 
             var payload = e.ApplicationMessage.Payload != null ? Encoding.UTF8.GetString(e.ApplicationMessage.Payload) : string.Empty;
 
-            Console.WriteLine($"Received '{e.ApplicationMessage.Topic}': {payload}");
+            _logger.LogInformation($"Received '{e.ApplicationMessage.Topic}': {payload}");
 
             if (!int.TryParse(topicParts[1].Substring(3), out var deviceId)) return;
 
+            var kind = topicParts.Length > 3 ? topicParts[2] : string.Empty;
+
             if (RelayAction != null)
             {
-                await RelayAction.Invoke(deviceId, payload);
+                await RelayAction.Invoke(deviceId, kind, payload);
             }
         }
 

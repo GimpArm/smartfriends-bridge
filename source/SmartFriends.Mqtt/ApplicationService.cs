@@ -67,18 +67,18 @@ namespace SmartFriends.Mqtt
             await _mqttClient.Close();
         }
 
-        private async Task ReplyActionRelay(int deviceId, string payload)
+        private async Task ReplyActionRelay(int deviceId, string kind, string payload)
         {
             if (int.TryParse(payload, out var intValue))
             {
-                await _smartfriendsSession.SetDeviceValue(deviceId, "", intValue);
+                await _smartfriendsSession.SetDeviceValue(deviceId, kind, intValue);
             }
             if (bool.TryParse(payload, out var boolValue))
             {
-                await _smartfriendsSession.SetDeviceValue(deviceId, "", boolValue);
+                await _smartfriendsSession.SetDeviceValue(deviceId, kind, boolValue);
             }
 
-            await _smartfriendsSession.SetDeviceValue(deviceId, "", payload);
+            await _smartfriendsSession.SetDeviceValue(deviceId, kind, payload);
         }
 
         private void DeviceUpdatedRelay(object sender, DeviceValue value)
