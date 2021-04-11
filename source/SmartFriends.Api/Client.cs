@@ -234,6 +234,7 @@ namespace SmartFriends.Api
                 if (Connected)
                 {
                     _logger.LogError(e, "Connection closed");
+                    Close().ConfigureAwait(false);
                 }
             }
         }
