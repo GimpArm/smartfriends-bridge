@@ -94,7 +94,8 @@ namespace SmartFriends.Mqtt
                     .WithClientOptions(ClientOptions())
                     .Build();
 
-                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").WithTopic("home-assistant").Build());
+                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").Build());
+                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic("home-assistant").Build());
                 await _client.StartAsync(options);
 
                 _keepAliveThread = new Thread(Keepalive);
@@ -161,7 +162,6 @@ namespace SmartFriends.Mqtt
 
                 var name = $"{device.Room} {device.Name}".Trim();
                 var deviceId = $"{IdPrefix}{device.Id}";
-                //TODO device.Devices.
 
                 var payload = JObject.FromObject(new DeviceRegistration
                 {
