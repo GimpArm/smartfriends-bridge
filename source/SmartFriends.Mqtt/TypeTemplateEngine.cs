@@ -52,8 +52,8 @@ namespace SmartFriends.Mqtt
                     Parameters = new Dictionary<string, string>
                     {
                         {"command_topic", "{baseTopic}/{deviceId}/rollingShutter/set"},
-                        {"value_template", "{{ 100 - value | int }}"},
                         {"position_topic", "{baseTopic}/{deviceId}/position"},
+                        {"position_template", "{{ 100 - value | int }}"},
                         {"set_position_topic", "{baseTopic}/{deviceId}/position/set"},
                         {"set_position_template", "{{ 100 - position }}"},
                         {"payload_stop", "Stop"},
