@@ -1,0 +1,380 @@
+[
+  {
+    "Id": 4358,
+    "Name": "Blinds Window",
+    "Room": "LivingRoom",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 9343,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 6960,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 9542,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 19026,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalHigh"
+      }
+    }
+  },
+  {
+    "Id": 10325,
+    "Name": "Blinds Door",
+    "Room": "LivingRoom",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 2538,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 625,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 18606,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 15764,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalHigh"
+      }
+    }
+  },
+  {
+    "Id": 262,
+    "Name": "Blinds Closet Side",
+    "Room": "Bedroom",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 17852,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 299,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 14515,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 134,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalMedium"
+      }
+    }
+  },
+  {
+    "Id": 8019,
+    "Name": "Blinds Bed",
+    "Room": "Bedroom",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 5984,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 8794,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 18158,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 1030,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalMedium"
+      }
+    }
+  },
+  {
+    "Id": 14673,
+    "Name": "Blinds Guest",
+    "Room": "Guest Room",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 18554,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 11572,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 80
+      },
+      "stepper": {
+        "Id": 4967,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 17987,
+        "description": "SchellenbergRssi",
+        "currentValue": "FailureNoSignal"
+      }
+    }
+  },
+  {
+    "Id": 13103,
+    "Name": "Blinds Dining",
+    "Room": "Dining Room",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 2973,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 3555,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 14246,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 4144,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalHigh"
+      }
+    }
+  },
+  {
+    "Id": 6866,
+    "Name": "Blinds Kitchen",
+    "Room": "Kitchen",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 17904,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 11050,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 13295,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 12976,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalHigh"
+      }
+    }
+  },
+  {
+    "Id": 10433,
+    "Name": "Blinds",
+    "Room": "Office",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "RollingShutter",
+    "Manufacturer": "Alfred Schellenberg GmbH",
+    "State": "Stop",
+    "Devices": {
+      "rollingShutter": {
+        "Id": 18447,
+        "description": "SchellenbergBlind",
+        "commands": {
+          "Stop": 0,
+          "Up": 1,
+          "Down": 2
+        },
+        "currentValue": "Stop"
+      },
+      "position": {
+        "Id": 2553,
+        "description": "SchellenbergPosition_Blind",
+        "max": 100,
+        "min": 0,
+        "precision": 0,
+        "step": 1,
+        "currentValue": 0
+      },
+      "stepper": {
+        "Id": 10066,
+        "description": "SchellenbergBlind.Steps",
+        "commands": {
+          "Up": 1,
+          "Down": 2
+        }
+      },
+      "default": {
+        "Id": 18383,
+        "description": "SchellenbergRssi",
+        "currentValue": "SignalHigh"
+      }
+    }
+  },
+  {
+    "Id": 5077,
+    "Name": "Radiator",
+    "Room": "Office",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "FailureStatus",
+    "Manufacturer": "Zigbee",
+    "Model": "TS0601",
+    "State": "Ok",
+    "Devices": {
+      "failureStatus": {
+        "Id": 3462,
+        "description": "ZigbeeFailureDevice",
+        "currentValue": "Ok"
+      }
+    }
+  },
+  {
+    "Id": 7007,
+    "Name": "COSensor-EF-3.0",
+    "Room": "Stair Case",
+    "GatewayDevice": "SmartFriendsBox",
+    "Kind": "FailureStatus",
+    "Manufacturer": "Zigbee",
+    "Model": "COSensor-EF-3.0",
+    "State": "Ok",
+    "Devices": {
+      "failureStatus": {
+        "Id": 3719,
+        "description": "ZigbeeFailureDevice",
+        "currentValue": "Ok"
+      }
+    }
+  }
+]

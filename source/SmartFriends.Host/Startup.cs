@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using SmartFriends.Api;
 using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
+using SmartFriends.Mqtt;
+using SmartFriends.Mqtt.Models;
 
 namespace SmartFriends.Host
 {
@@ -26,8 +28,12 @@ namespace SmartFriends.Host
         public void ConfigureServices(IServiceCollection services)
         {
             services.Configure<Configuration>(Configuration.GetSection("SmartFriends"));
+            services.Configure<MqttConfiguration>(Configuration.GetSection("Mqtt"));
             services.AddSingleton(x => new Session(x.GetService<IOptions<Configuration>>().Value, x.GetService<ILogger<Session>>()));
+            services.AddSingleton(x => new TypeTemplateEngine(x.GetService<IOptions<MqttConfiguration>>()?.Value));
+            services.AddSingleton(x => new MqttClient(x.GetService<IOptions<MqttConfiguration>>()?.Value, x.GetService<ILogger<MqttClient>>(), x.GetService<TypeTemplateEngine>()));
             services.AddHostedService(x => x.GetService<Session>());
+            services.AddHostedService<MqttClientService>();
             services.AddControllers().AddNewtonsoftJson(x =>
             {
                 x.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;

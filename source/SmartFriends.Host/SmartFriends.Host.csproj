@@ -14,14 +14,15 @@
    </ItemGroup>
 
    <ItemGroup>
-      <PackageReference Include="Logging.Memory" Version="3.0.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.3" />
+      <PackageReference Include="Logging.Memory" Version="3.1.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.5" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
       <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
    </ItemGroup>
 
    <ItemGroup>
       <ProjectReference Include="..\SmartFriends.Api\SmartFriends.Api.csproj" />
+      <ProjectReference Include="..\SmartFriends.Mqtt\SmartFriends.Mqtt.csproj" />
    </ItemGroup>
 
 

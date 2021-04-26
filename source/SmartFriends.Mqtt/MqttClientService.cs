@@ -11,16 +11,16 @@ using SmartFriends.Mqtt.Models;
 
 namespace SmartFriends.Mqtt
 {
-    public class ApplicationService: IHostedService
+    public class MqttClientService: IHostedService
     {
         public const string DevicesFile = "devices.json";
 
-        private readonly ILogger<ApplicationService> _logger;
+        private readonly ILogger<MqttClientService> _logger;
         private readonly Session _smartfriendsSession;
         private readonly MqttConfiguration _mqttConfig;
         private readonly MqttClient _mqttClient;
 
-        public ApplicationService(ILogger<ApplicationService> logger, Session smartfriendsSession, IOptions<MqttConfiguration> mqttConfig, MqttClient mqttClient)
+        public MqttClientService(ILogger<MqttClientService> logger, Session smartfriendsSession, IOptions<MqttConfiguration> mqttConfig, MqttClient mqttClient)
         {
             _logger = logger;
             _smartfriendsSession = smartfriendsSession;
@@ -30,9 +30,9 @@ namespace SmartFriends.Mqtt
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("StartAsync method called.");
+            if (!_mqttConfig.Enabled) return;
 
-            await _smartfriendsSession.StartAsync(cancellationToken);
+            _logger.LogInformation("MQTT StartAsync method called.");
 
             _mqttClient.RelayAction = ReplyActionRelay;
             while (!await _mqttClient.Open() && !cancellationToken.IsCancellationRequested)
@@ -61,9 +61,9 @@ namespace SmartFriends.Mqtt
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("StopAsync method called.");
+            if (!_mqttConfig.Enabled) return;
+            _logger.LogInformation("MQTT StopAsync method called.");
 
-            await _smartfriendsSession.StopAsync(cancellationToken);
             await _mqttClient.Close();
         }
 

@@ -29,10 +29,10 @@ namespace SmartFriends.Host.Controllers
             return _session.DeviceMasters;
         }
 
-        [HttpGet]
-        public object Raw()
+        [HttpGet("{root?}")]
+        public object Raw(string root)
         {
-            return _session.RawDevices;
+            return string.IsNullOrWhiteSpace(root) ? _session.Raw : _session.Raw[root];
         }
 
         [HttpGet]

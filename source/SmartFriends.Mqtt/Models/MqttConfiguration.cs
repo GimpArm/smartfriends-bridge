@@ -2,6 +2,7 @@
 {
     public class MqttConfiguration
     {
+        public bool Enabled { get; set; }
         public string DataPath { get; set; }
         public string BaseTopic { get; set; }
         public string Server { get; set; }

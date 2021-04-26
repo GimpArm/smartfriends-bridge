@@ -26,7 +26,8 @@ namespace SmartFriends.Api
 
         public bool Ready { get; private set; }
         public readonly List<DeviceMaster> DeviceMasters = new List<DeviceMaster>();
-        public JToken RawDevices { get; private set; }
+
+        public JToken Raw { get; private set; }
 
         public event EventHandler<DeviceValue> DeviceUpdated;
 
@@ -142,7 +143,7 @@ namespace SmartFriends.Api
 
                 if (result["newDeviceInfos"].HasValues)
                 {
-                    RawDevices = result["newDeviceInfos"];
+                    Raw = result;
                 }
                 var deviceInfo = result["newDeviceInfos"]?.ToObject<DeviceInfo[]>() ?? Array.Empty<DeviceInfo>();
                 Parallel.ForEach(deviceInfo, x =>
