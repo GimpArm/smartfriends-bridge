@@ -14,7 +14,6 @@
    </ItemGroup>
 
    <ItemGroup>
-      <PackageReference Include="Logging.Memory" Version="3.1.0" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.5" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
       <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />

@@ -1,5 +1,4 @@
-﻿using Logging.Memory;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SmartFriends.Api;
 using SmartFriends.Api.Models;
@@ -33,12 +32,6 @@ namespace SmartFriends.Host.Controllers
         public object Raw(string root)
         {
             return string.IsNullOrWhiteSpace(root) ? _session.Raw : _session.Raw[root];
-        }
-
-        [HttpGet]
-        public IEnumerable<string> Log()
-        {
-            return MemoryLogger.LogList;
         }
 
         [HttpGet("{id}")]

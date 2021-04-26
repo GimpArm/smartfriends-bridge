@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace SmartFriends.Host
 {
@@ -14,7 +15,8 @@ namespace SmartFriends.Host
             Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(builder =>
                 {
-                    builder.AddMemory();
+                    builder.AddConsole();
+                    builder.AddDebug();
                 })
                 .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
     }
