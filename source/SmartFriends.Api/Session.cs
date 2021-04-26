@@ -184,7 +184,6 @@ namespace SmartFriends.Api
         {
             try
             {
-
                 var token = (CancellationToken) input;
                 while (!token.IsCancellationRequested)
                 {
