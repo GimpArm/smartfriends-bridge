@@ -10,12 +10,4 @@
   <ItemGroup>
     <ProjectReference Include="..\SmartFriends.Api\SmartFriends.Api.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <None Update="deviceMap.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="typeTemplate.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 </Project>

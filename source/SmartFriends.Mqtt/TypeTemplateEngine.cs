@@ -22,6 +22,12 @@ namespace SmartFriends.Mqtt
 
         public TypeTemplateEngine(MqttConfiguration mqttConfig)
         {
+            if (!mqttConfig.Enabled)
+            {
+                _templates = Array.Empty<TypeTemplate>();
+                _baseTopic = string.Empty;
+                return;
+            }
             if (!string.IsNullOrWhiteSpace(mqttConfig.DataPath))
             {
                 Directory.CreateDirectory(mqttConfig.DataPath);
@@ -45,34 +51,18 @@ namespace SmartFriends.Mqtt
                     Class = "shutter",
                     Parameters = new Dictionary<string, string>
                     {
-                        {"value_template", "{{ 100 - value_json.analogValue }}"},
-                        {"position_topic", "{baseTopic}/{deviceId}"},
-                        {"set_position_topic", "{baseTopic}/{deviceId}/set"},
+                        {"command_topic", "{baseTopic}/{deviceId}/rollingShutter/set"},
+                        {"value_template", "{{ 100 - value | int }}"},
+                        {"position_topic", "{baseTopic}/{deviceId}/position"},
+                        {"set_position_topic", "{baseTopic}/{deviceId}/position/set"},
                         {"set_position_template", "{{ 100 - position }}"},
                         {"payload_stop", "Stop"},
                         {"payload_open", "Up"},
-                        {"payload_close", "Down"}
-                    }
-                },
-                new TypeTemplate
-                {
-                    Type = "switch",
-                    Parameters = new Dictionary<string, string>
-                    {
-                        {"value_template", "{{ value_json.state }}"}
-                    }
-                },
-                new TypeTemplate
-                {
-                    Type = "binary_sensor",
-                    Parameters = new Dictionary<string, string>
-                    {
-                        {"value_template", "{{ value_json.state }}"}
+                        { "payload_close", "Down"}
                     }
                 }
             };
             File.WriteAllText(path, template.Serialize());
-
             return template;
         }
 

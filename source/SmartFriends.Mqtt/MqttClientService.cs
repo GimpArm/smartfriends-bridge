@@ -13,8 +13,6 @@ namespace SmartFriends.Mqtt
 {
     public class MqttClientService: IHostedService
     {
-        public const string DevicesFile = "devices.json";
-
         private readonly ILogger<MqttClientService> _logger;
         private readonly Session _smartfriendsSession;
         private readonly MqttConfiguration _mqttConfig;
@@ -49,7 +47,6 @@ namespace SmartFriends.Mqtt
             {
                 Directory.CreateDirectory(_mqttConfig.DataPath);
             }
-            await File.WriteAllTextAsync(Path.Combine(_mqttConfig.DataPath, DevicesFile), _smartfriendsSession.DeviceMasters.Serialize(), cancellationToken);
 
             if (cancellationToken.IsCancellationRequested) return;
 
@@ -57,7 +54,6 @@ namespace SmartFriends.Mqtt
 
             _smartfriendsSession.DeviceUpdated += DeviceUpdatedRelay;
         }
-
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
