@@ -138,7 +138,7 @@ And you will see an output like this:
 ]
 ```
 
-### Using REST API
+# Using REST API
 
 The service exposes a simple REST API, which can be called to control your devices.
 
@@ -269,7 +269,7 @@ switch:
 ```
 
 
-### Using MQTT
+# Using MQTT
 
 ## DeviceMap
 
