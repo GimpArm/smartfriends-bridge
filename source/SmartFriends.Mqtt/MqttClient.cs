@@ -165,6 +165,8 @@ namespace SmartFriends.Mqtt
                 var name = $"{device.Room} {device.Name}".Trim();
                 var deviceId = $"{IdPrefix}{device.Id}";
 
+                _logger.LogInformation($"Sending device information for {deviceId} '{name}'");
+
                 var payload = JObject.FromObject(new DeviceRegistration
                 {
                     Name = name,
@@ -214,6 +216,8 @@ namespace SmartFriends.Mqtt
         {
             var device = _deviceMap.FirstOrDefault(x => x.Id == value.MasterDeviceId);
             if (device == null) return;
+
+            _logger.LogInformation($"Device update {IdPrefix}{device.Id}");
 
             await _client.PublishAsync(new MqttApplicationMessage
             {
