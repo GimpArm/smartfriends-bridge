@@ -58,6 +58,7 @@ namespace SmartFriends.Mqtt
                 Directory.CreateDirectory(mqttConfig.DataPath);
             }
             _deviceMap = LoadDeviceMap(Path.Combine(_mqttConfig.DataPath, DeviceMapFile));
+            _logger.LogInformation($"Loaded {_deviceMap.Length} devices to map.");
             _mqttFactory = new MqttFactory();
         }
 
