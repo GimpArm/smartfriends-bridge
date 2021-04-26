@@ -238,7 +238,7 @@ namespace SmartFriends.Mqtt
 
         private void DisconnectedHandler(MqttClientDisconnectedEventArgs e)
         {
-            _logger.LogInformation("Client Disconnected");
+            _logger.LogInformation($"Client Disconnected {e.Reason}");
         }
 
         private async Task MessageReceived(MqttApplicationMessageReceivedEventArgs e)
