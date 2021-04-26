@@ -119,12 +119,12 @@ And you will see an output like this:
     "room": "LivingRoom",
     "gatewayDevice": "SmartFriendsBox",
     "kind": "switchActuator",
-    "manufacturer": "Zigbee Device",
+    "manufacturer": "Zigbee Switch Device",
     "state": "Off",
     "devices": {
       "switchActuator": {
         "Id": 14246,
-        "description": "SchellenbergBlind.Steps",
+        "description": "Zigbee Switch Device",
         "commands": {
           "Off": 0,
           "On": 1,
