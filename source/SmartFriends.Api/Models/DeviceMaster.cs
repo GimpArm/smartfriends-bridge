@@ -16,7 +16,7 @@ namespace SmartFriends.Api.Models
 
         public int Id { get; }
 
-        public string Name => _defaultDevice.MasterDeviceName;
+        public string Name => _defaultDevice.MasterDeviceName ?? _defaultDevice.DeviceName;
 
         public string Room => _room?.GetCleanName() ?? "Unknown";
 

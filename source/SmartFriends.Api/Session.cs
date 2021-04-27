@@ -119,7 +119,8 @@ namespace SmartFriends.Api
 
         private void ClientDeviceUpdated(object sender, DeviceValue value)
         {
-            var device = GetDevice(value.MasterDeviceId);
+            var masterId = value.MasterDeviceId == 0 ? value.DeviceId : value.MasterDeviceId;
+            var device = GetDevice(masterId);
             if (device?.SetValues(value) ?? false)
             {
                 DeviceUpdated?.Invoke(this, value);
@@ -150,7 +151,7 @@ namespace SmartFriends.Api
                 {
                     x.Definition = _definitions.FirstOrDefault(y => y.DeviceTypServer == x.DeviceTypServer && y.DeviceDesignation == x.DeviceDesignation);
                 });
-                foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId))
+                foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId == 0 ? x.DeviceId : x.MasterDeviceId))
                 {
                     var masterId = masterDevice.Key;
                     if (DeviceMasters.Any(x => x.Id == masterId)) continue;
