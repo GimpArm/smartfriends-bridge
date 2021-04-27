@@ -56,9 +56,12 @@ namespace SmartFriends.Mqtt
                         {"position_template", "{{ 100 - value | int }}"},
                         {"set_position_topic", "{baseTopic}/{deviceId}/position/set"},
                         {"set_position_template", "{{ 100 - position }}"},
+                        {"state_stopped", "Stop"},
+                        {"state_opening", "Up" },
+                        {"state_closing", "Down" },
                         {"payload_stop", "Stop"},
                         {"payload_open", "Up"},
-                        { "payload_close", "Down"}
+                        {"payload_close", "Down"}
                     }
                 }
             };
