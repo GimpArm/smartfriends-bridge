@@ -98,7 +98,7 @@ namespace SmartFriends.Mqtt
                     .Build();
 
                 await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").Build());
-                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic("home-assistant").Build());
+                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic("home-assistant/#").Build());
                 await _client.StartAsync(options);
 
                 _keepAliveThread = new Thread(Keepalive);
