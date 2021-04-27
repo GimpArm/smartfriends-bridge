@@ -372,10 +372,13 @@ There are currently 2 variables that can be useful for making templates that app
   "Class": "shutter",
   "Parameters": {
     "command_topic": "{baseTopic}/{deviceId}/rollingShutter/set",
-    "value_template": "{{ 100 - value | int }}",
     "position_topic": "{baseTopic}/{deviceId}/position",
+    "position_template": "{{ 100 - value | int }}",
     "set_position_topic": "{baseTopic}/{deviceId}/position/set",
     "set_position_template": "{{ 100 - position }}",
+    "state_stopped": "Stop",
+    "state_opening": "Up",
+    "state_closing": "Down",
     "payload_stop": "Stop",
     "payload_open": "Up",
     "payload_close": "Down"
