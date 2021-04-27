@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Newtonsoft.Json;
+using SmartFriends.Api.Models;
 
 namespace SmartFriends.Api.Helpers
 {
@@ -31,6 +32,11 @@ namespace SmartFriends.Api.Helpers
         public static string Serialize(this object input)
         {
             return JsonConvert.SerializeObject(input, SerializerSettings);
+        }
+
+        public static bool IsVisible(this DeviceInfo device)
+        {
+            return device?.Definition?.Hidden == null || !device.Definition.Hidden.ContainsKey("deviceOverview") || !device.Definition.Hidden["deviceOverview"];
         }
     }
 }
