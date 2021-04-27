@@ -44,13 +44,12 @@ namespace SmartFriends.Api.Models
 
         public Dictionary<string, DeviceTypeProxy> Devices { get; }
 
-        public DeviceMaster(int id, RoomInfo roomInfo, IEnumerable<DeviceInfo> devices)
+        public DeviceMaster(int id, RoomInfo roomInfo, DeviceInfo[] devices)
         {
             Id = id;
-            _devices = devices.ToArray();
+            _devices = devices;
             Devices = new Dictionary<string, DeviceTypeProxy>(StringComparer.OrdinalIgnoreCase);
-            foreach (var device in _devices.Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) &&
-                                                       (x.Definition?.Hidden == null || !x.Definition.Hidden.ContainsKey("deviceOverview") || !x.Definition.Hidden["deviceOverview"]))
+            foreach (var device in _devices.Where(x => !string.IsNullOrEmpty(x.Definition?.DeviceType?.Kind) && x.IsVisible())
                 .GroupBy(x => x.Definition.DeviceType.Kind))
             {
                 var kind = device.Key;

@@ -155,8 +155,8 @@ namespace SmartFriends.Api
                     var masterId = masterDevice.Key;
                     if (DeviceMasters.Any(x => x.Id == masterId)) continue;
 
-                    var devices = masterDevice.ToList();
-                    var room = _rooms.FirstOrDefault(x => x.RoomId == devices[0].RoomId);
+                    var devices = masterDevice.ToArray();
+                    var room = _rooms.FirstOrDefault(x => devices.Any(y => y.RoomId == x.RoomId));
                     if (room == null) continue;
 
                     var master = new DeviceMaster(masterId, room, devices)
