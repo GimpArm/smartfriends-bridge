@@ -149,7 +149,7 @@ namespace SmartFriends.Api
                 var deviceInfo = result["newDeviceInfos"]?.ToObject<DeviceInfo[]>() ?? Array.Empty<DeviceInfo>();
                 Parallel.ForEach(deviceInfo, x =>
                 {
-                    x.Definition = _definitions.FirstOrDefault(y => y.DeviceTypServer == x.DeviceTypServer && y.DeviceDesignation == x.DeviceDesignation);
+                    x.Definition = _definitions.FirstOrDefault(y => y.DeviceDesignation == x.DeviceDesignation);
                 });
                 foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId == 0 ? x.DeviceId : x.MasterDeviceId))
                 {
