@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -298,9 +299,9 @@ namespace SmartFriends.Mqtt
 
         private byte[] MakePayload(object input)
         {
-            if (input is FuzzyValue fuzzy && !fuzzy.IsHsv)
+            if (input is FuzzyValue fuzzy && !fuzzy.ShouldSerialize)
             {
-                return Encoding.UTF8.GetBytes(fuzzy.ToString());
+                return Encoding.UTF8.GetBytes(string.Format(CultureInfo.InvariantCulture, "{0}", fuzzy.Value));
             }
             return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(input, SerializerSettings));
         }
