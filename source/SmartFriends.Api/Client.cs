@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SmartFriends.Api.Helpers;
+using SmartFriends.Api.Interfaces;
 using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 using SmartFriends.Api.Models.Commands;
@@ -18,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace SmartFriends.Api
 {
-    public class Client: IDisposable
+    public class Client : IDisposable, IClient
     {
         private readonly SemaphoreSlim _commandSemaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _connectionSemaphore = new SemaphoreSlim(1, 1);
@@ -66,7 +67,7 @@ namespace SmartFriends.Api
                 var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _client = new TcpClient(_configuration.Host, _configuration.Port);
                 _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
-                await _stream.AuthenticateAsClientAsync(_configuration.Host, new X509CertificateCollection(new[] {cert}), SslProtocols.Tls, false);
+                await _stream.AuthenticateAsClientAsync(_configuration.Host, new X509CertificateCollection(new[] { cert }), SslProtocols.Tls, false);
                 await EnsureReader(true);
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
@@ -195,7 +196,7 @@ namespace SmartFriends.Api
         {
             try
             {
-                var token = (CancellationToken) input;
+                var token = (CancellationToken)input;
                 while (!token.IsCancellationRequested)
                 {
                     var buffer = new byte[2048];
@@ -248,7 +249,7 @@ namespace SmartFriends.Api
         {
             return JsonConvert.DeserializeObject<T>(input, new JsonSerializerSettings
             {
-                Converters = new JsonConverter[]{ new BooleanNumberConverter(), new TextOptionArrayConverter(), new HasHsvValueConverter(), new HsvValueConverter() }
+                Converters = new JsonConverter[] { new BooleanNumberConverter(), new TextOptionArrayConverter(), new HasHsvValueConverter(), new HsvValueConverter() }
             });
         }
     }

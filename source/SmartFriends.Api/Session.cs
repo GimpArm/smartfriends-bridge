@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using SmartFriends.Api.Helpers;
+using SmartFriends.Api.Interfaces;
 
 namespace SmartFriends.Api
 {
@@ -18,7 +19,7 @@ namespace SmartFriends.Api
         private long _lastUpdate;
         private Thread _refreshThread;
         private CancellationTokenSource _tokenSource;
-        private readonly Client _client;
+        private readonly IClient _client;
         private readonly ILogger _logger;
 
         private readonly List<DeviceDefinition> _definitions = new List<DeviceDefinition>();
@@ -31,10 +32,10 @@ namespace SmartFriends.Api
 
         public event EventHandler<DeviceValue> DeviceUpdated;
 
-        public Session(Configuration configuration, ILogger logger)
+        public Session(Configuration configuration, ILogger logger, IClient client = null)
         {
             _logger = logger;
-            _client = new Client(configuration, logger);
+            _client = client ?? new Client(configuration, logger);
             _client.DeviceUpdated += ClientDeviceUpdated;
         }
 
