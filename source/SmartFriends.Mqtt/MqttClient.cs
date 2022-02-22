@@ -205,7 +205,7 @@ namespace SmartFriends.Mqtt
                         Topic = $"{_mqttConfig.BaseTopic}/{deviceId}",
                         ContentType = "application/json",
                         Retain = true,
-                        Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(device, SerializerSettings))
+                        Payload = MakePayload(device)
                     }
                 );
             }
@@ -225,14 +225,14 @@ namespace SmartFriends.Mqtt
                 Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/state",
                 ContentType = "text/plain",
                 Retain = true,
-                Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(deviceInfo.State, SerializerSettings))
+                Payload = MakePayload(deviceInfo.State)
             });
             await _client.PublishAsync(deviceInfo.Devices.Where(x => x.Value.CurrentValue != null).Select(x => new MqttApplicationMessage
             {
                 Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/{x.Key}",
                 ContentType = "text/plain",
                 Retain = true,
-                Payload = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(x.Value.CurrentValue, SerializerSettings))
+                Payload = MakePayload(x.Value.CurrentValue)
             }));
         }
 
@@ -294,6 +294,15 @@ namespace SmartFriends.Mqtt
             {
                 //Eat the operation cancelled exceptions
             }
+        }
+
+        private byte[] MakePayload(object input)
+        {
+            if (input is FuzzyValue fuzzy && !fuzzy.IsHsv)
+            {
+                return Encoding.UTF8.GetBytes(fuzzy.ToString());
+            }
+            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(input, SerializerSettings));
         }
 
         public void Dispose()

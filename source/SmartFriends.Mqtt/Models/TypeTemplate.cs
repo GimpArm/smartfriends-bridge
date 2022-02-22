@@ -6,6 +6,6 @@ namespace SmartFriends.Mqtt.Models
     {
         public string Type { get; set; }
         public string Class { get; set; }
-        public Dictionary<string, string> Parameters { get; set; }
+        public Dictionary<string, object> Parameters { get; set; }
     }
 }

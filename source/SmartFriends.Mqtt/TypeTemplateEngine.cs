@@ -49,7 +49,7 @@ namespace SmartFriends.Mqtt
                 {
                     Type = "cover",
                     Class = "shutter",
-                    Parameters = new Dictionary<string, string>
+                    Parameters = new Dictionary<string, object>
                     {
                         {"command_topic", "{baseTopic}/{deviceId}/rollingShutter/set"},
                         {"position_topic", "{baseTopic}/{deviceId}/position"},
@@ -61,7 +61,8 @@ namespace SmartFriends.Mqtt
                         {"state_closing", "Down" },
                         {"payload_stop", "Stop"},
                         {"payload_open", "Up"},
-                        {"payload_close", "Down"}
+                        {"payload_close", "Down"},
+                        {"test", new List<string>{"1","3"} }
                     }
                 }
             };
@@ -76,7 +77,7 @@ namespace SmartFriends.Mqtt
             Merge(payload, map.Parameters, deviceId);
         }
 
-        private Dictionary<string, string> GetTemplate(DeviceMap map)
+        private Dictionary<string, object> GetTemplate(DeviceMap map)
         {
             var template = _templates.FirstOrDefault(x =>
                                string.Equals(x.Type, map.Type, StringComparison.InvariantCultureIgnoreCase) && string.Equals(x.Class, map.Class, StringComparison.InvariantCultureIgnoreCase))
@@ -85,24 +86,40 @@ namespace SmartFriends.Mqtt
             return template?.Parameters;
         }
 
-        private void Merge(JObject payload, Dictionary<string, string> parameters, string deviceId)
+        private void Merge(JObject payload, Dictionary<string, object> parameters, string deviceId)
         {
             if (parameters == null) return;
 
             foreach (var kvp in parameters)
             {
                 JToken value;
-                if (int.TryParse(kvp.Value, out var intValue))
+                if (kvp.Value == null)
                 {
-                    value = intValue;
+                    value = null;
                 }
-                else if (decimal.TryParse(kvp.Value, out var decValue))
+                else if (kvp.Value is bool boolVal)
                 {
-                    value = decValue;
+                    value = boolVal;
+                }
+                else if (kvp.Value is long longVal)
+                {
+                    value = longVal;
+                }
+                else if (kvp.Value is double decimalVal)
+                {
+                    value = decimalVal;
+                }
+                else if (kvp.Value is DateTime dateVal)
+                {
+                    value = dateVal;
+                }
+                else if (kvp.Value is JToken tokenVal)
+                {
+                    value = tokenVal;
                 }
                 else
                 {
-                    value = ReplaceVariables(kvp.Value, deviceId, _baseTopic);
+                    value = ReplaceVariables(kvp.Value.ToString(), deviceId, _baseTopic);
                 }
 
                 if (payload.ContainsKey(kvp.Key))
