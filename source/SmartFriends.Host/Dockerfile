@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-buster-slim AS build
 WORKDIR /src
 COPY ["SmartFriends.Host/SmartFriends.Host.csproj", "SmartFriends.Host/"]
 COPY ["SmartFriends.Api/SmartFriends.Api.csproj", "SmartFriends.Api/"]
