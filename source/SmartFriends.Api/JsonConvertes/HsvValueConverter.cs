@@ -35,7 +35,7 @@ namespace SmartFriends.Api.JsonConvertes
                         result = Convert.ToBoolean(jValue);
                         break;
                     case JsonToken.Integer:
-                        result = Convert.ToInt32(jValue);
+                        result = Convert.ToInt64(jValue);
                         break;
                     case JsonToken.Float:
                         result = Convert.ToDecimal(jValue);
