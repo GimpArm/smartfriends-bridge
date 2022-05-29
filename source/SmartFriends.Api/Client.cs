@@ -7,6 +7,7 @@ using SmartFriends.Api.Models;
 using SmartFriends.Api.Models.Commands;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Security;
@@ -199,7 +200,7 @@ namespace SmartFriends.Api
                 var token = (CancellationToken)input;
                 while (!token.IsCancellationRequested)
                 {
-                    var buffer = new byte[2048];
+                    var buffer = new byte[1024];
                     var messageData = new StringBuilder();
                     int bytes;
                     do
@@ -217,15 +218,20 @@ namespace SmartFriends.Api
                         }
                     } while (bytes != 0 && !token.IsCancellationRequested);
 
-                    var message = Deserialize<Message>(messageData.ToString());
-                    if (message.ResponseMessage == "newDeviceValue")
+                    try
                     {
-                        _logger.LogInformation($"Received Status: {messageData}");
-                        DeviceUpdated?.Invoke(this, message.Response.ToObject<DeviceValue>());
+                        var message = Deserialize<Message>(messageData.ToString());
+                        _logger.LogInformation($"Received message: {messageData}");
+                        HandleMessage(message);
                     }
-                    else
+                    catch
                     {
-                        _messageQueue.Enqueue(message);
+                        // Smartfriends problably sent 2 messages packed inside 1.
+                        _logger.LogInformation($"Received invalid json message, will try to look for multiple objects: {messageData}");
+                        foreach (var message in ParseMultiMessage(messageData))
+                        {
+                            HandleMessage(message);
+                        }
                     }
                 }
             }
@@ -240,17 +246,107 @@ namespace SmartFriends.Api
             }
         }
 
+        private void HandleMessage(Message message)
+        {
+            if (message == null) return;
+
+            switch (message?.ResponseMessage)
+            {
+                case "newDeviceValue":
+                    DeviceUpdated?.Invoke(this, message.Response.ToObject<DeviceValue>());
+                    break;
+                case "newSwitchingSequenceInfo":
+                    _logger.LogInformation($"Received Switch Sequence Info: {message.Response["switchingSequenceID"]}, nextActivationTime: {message.Response["nextActivationTime"]}");
+                    break;
+                case "newSwitchingSequenceStatus":
+                    _logger.LogInformation($"Received Switch Sequence: {message.Response["switchingSequenceID"]}, status: {message.Response["status"]}");
+                    break;
+                case "newDeviceInfo":
+                    _logger.LogInformation($"Received new device: {message.Response}");
+                    break;
+                default:
+                    _messageQueue.Enqueue(message);
+                    break;
+            }
+        }
+
+        private IEnumerable<Message> ParseMultiMessage(StringBuilder input)
+        {
+            var openBrace = 0;
+            var openSingleQuote = false;
+            var openDoubleQuote = false;
+            var messageData = new StringBuilder();
+            for (var i = 0; i < input.Length; ++i)
+            {
+                switch (input[i])
+                {
+                    case '{':
+                        if (!openSingleQuote && !openDoubleQuote)
+                        {
+                            openBrace++;
+                        }
+                        break;
+                    case '}':
+                        if (!openSingleQuote && !openDoubleQuote)
+                        {
+                            openBrace--;
+                            if (openBrace == 0)
+                            {
+                                messageData.Append(input[i]);
+                                var message = Deserialize<Message>(messageData.ToString());
+                                messageData.Clear();
+                                if (message != null)
+                                {
+                                    yield return message;
+                                }
+                            }
+                        }
+                        break;
+                    case '"':
+                        if (!openSingleQuote)
+                        {
+                            openDoubleQuote = !openDoubleQuote;
+                        }
+                        break;
+                    case '\'':
+                        if (!openDoubleQuote)
+                        {
+                            openSingleQuote = !openSingleQuote;
+                        }
+                        break;
+                }
+                messageData.Append(input[i]);
+            }
+            if (messageData.Length > 5)
+            {
+                var message = Deserialize<Message>(messageData.ToString());
+                if (message != null)
+                {
+                    yield return message;
+                }
+            }
+        }
+
         private static string Serialize(object input)
         {
             return JsonConvert.SerializeObject(input) + "\n";
         }
 
-        private static T Deserialize<T>(string input)
+
+        private T Deserialize<T>(string input)
         {
-            return JsonConvert.DeserializeObject<T>(input, new JsonSerializerSettings
+            try
             {
-                Converters = new JsonConverter[] { new BooleanNumberConverter(), new TextOptionArrayConverter(), new HasHsvValueConverter(), new HsvValueConverter() }
-            });
+                return JsonConvert.DeserializeObject<T>(input, new JsonSerializerSettings
+                {
+                    Converters = new JsonConverter[] { new BooleanNumberConverter(), new TextOptionArrayConverter(), new HasHsvValueConverter(), new HsvValueConverter() }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unable to parse message");
+                return default(T);
+            }
         }
     }
 }
