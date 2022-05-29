@@ -280,12 +280,6 @@ namespace SmartFriends.Api
             {
                 switch (input[i])
                 {
-                    case '{':
-                        if (!openSingleQuote && !openDoubleQuote)
-                        {
-                            openBrace++;
-                        }
-                        break;
                     case '}':
                         if (!openSingleQuote && !openDoubleQuote)
                         {
@@ -302,20 +296,28 @@ namespace SmartFriends.Api
                             }
                         }
                         break;
+                    case '{':
+                        if (!openSingleQuote && !openDoubleQuote)
+                        {
+                            openBrace++;
+                        }
+                        messageData.Append(input[i]);
+                        break;
                     case '"':
                         if (!openSingleQuote)
                         {
                             openDoubleQuote = !openDoubleQuote;
                         }
+                        messageData.Append(input[i]);
                         break;
                     case '\'':
                         if (!openDoubleQuote)
                         {
                             openSingleQuote = !openSingleQuote;
                         }
+                        messageData.Append(input[i]);
                         break;
                 }
-                messageData.Append(input[i]);
             }
             if (messageData.Length > 5)
             {
