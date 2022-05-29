@@ -221,7 +221,6 @@ namespace SmartFriends.Api
                     try
                     {
                         var message = Deserialize<Message>(messageData.ToString());
-                        _logger.LogInformation($"Received message: {messageData}");
                         HandleMessage(message);
                     }
                     catch
