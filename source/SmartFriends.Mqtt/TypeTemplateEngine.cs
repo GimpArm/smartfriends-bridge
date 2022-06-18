@@ -40,7 +40,17 @@ namespace SmartFriends.Mqtt
         {
             if (File.Exists(path))
             {
-                return JsonConvert.DeserializeObject<TypeTemplate[]>(File.ReadAllText(path));
+                var templates = JsonConvert.DeserializeObject<TypeTemplate[]>(File.ReadAllText(path));
+                var coverTemplate = templates.FirstOrDefault(x => x.Type == "cover" && x.Class == "shutter" && x.Parameters["state_stopped"] as string == "Stop");
+                if (coverTemplate != null)
+                {
+                    //Upgrade template
+                    coverTemplate.Parameters["state_stopped"] = 0;
+                    coverTemplate.Parameters["state_opening"] = 1;
+                    coverTemplate.Parameters["state_closing"] = 2;
+                    File.WriteAllText(path, templates.Serialize());
+                }
+                return templates;
             }
 
             var template = new[]
@@ -49,20 +59,31 @@ namespace SmartFriends.Mqtt
                 {
                     Type = "cover",
                     Class = "shutter",
-                    Parameters = new Dictionary<string, object>
+                    Parameters = new()
                     {
                         {"command_topic", "{baseTopic}/{deviceId}/rollingShutter/set"},
                         {"position_topic", "{baseTopic}/{deviceId}/position"},
                         {"position_template", "{{ 100 - value | int }}"},
                         {"set_position_topic", "{baseTopic}/{deviceId}/position/set"},
                         {"set_position_template", "{{ 100 - position }}"},
-                        {"state_stopped", "Stop"},
-                        {"state_opening", "Up" },
-                        {"state_closing", "Down" },
+                        {"state_stopped", 0},
+                        {"state_opening", 1 },
+                        {"state_closing", 2 },
                         {"payload_stop", "Stop"},
                         {"payload_open", "Up"},
-                        {"payload_close", "Down"},
-                        {"test", new List<string>{"1","3"} }
+                        {"payload_close", "Down"}
+                    }
+                },
+                new TypeTemplate
+                {
+                    Type = "switch",
+                    Parameters = new()
+                    {
+                        {"state_on", 1 },
+                        {"state_off", 0 },
+                        {"payload_on", 1 },
+                        {"payload_off", 0 },
+                        {"assumed_state", true }
                     }
                 }
             };
