@@ -220,8 +220,11 @@ namespace SmartFriends.Api
 
                     try
                     {
-                        var message = Deserialize<Message>(messageData.ToString());
-                        HandleMessage(message);
+                        foreach (var subMessage in messageData.ToString().Split("\r\n", StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            var message = Deserialize<Message>(subMessage);
+                            HandleMessage(message);
+                        }
                     }
                     catch
                     {
