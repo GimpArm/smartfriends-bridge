@@ -19,12 +19,20 @@ namespace SmartFriends.Api.JsonConvertes
                 case "yes":
                 case "y":
                 case "1":
+                case "switchactuatoron":
+                case "lockingsystemlocked":
+                case "shutterup":
                     return 1;
                 case "false":
                 case "no":
                 case "n":
                 case "0":
+                case "switchactuatoroff":
+                case "lockingsystemunlocked":
+                case "shutterdown":
                     return 0;
+                case "shutterstop":
+                    return 2;
             }
 
             return Convert.ToInt32(reader.Value);
