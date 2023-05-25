@@ -250,9 +250,9 @@ namespace SmartFriends.Api
 
         private void HandleMessage(Message message)
         {
-            if (message == null) return;
+            if (message == null || message.ResponseCode == 5) return;
 
-            switch (message?.ResponseMessage)
+            switch (message.ResponseMessage)
             {
                 case "newDeviceValue":
                     DeviceUpdated?.Invoke(this, message.Response.ToObject<DeviceValue>());
