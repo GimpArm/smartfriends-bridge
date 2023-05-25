@@ -8,7 +8,7 @@
         public int Port { get; set; } = 4300;
         public string CSymbol { get; set; } = "D19033";
         public string CSymbolAddon { get; set; } = "i";
-        public string ShcVersion { get; set; } = "2.21.1";
-        public string ShApiVersion { get; set; } = "2.20";
+        public string ShcVersion { get; set; } = "3.4.4";
+        public string ShApiVersion { get; set; } = "3.3";
     }
 }
