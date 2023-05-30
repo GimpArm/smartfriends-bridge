@@ -4,6 +4,6 @@
     {
         public GetCompatibilityConfiguration() : base("getCompatibilityConfiguration") { }
 
-        public override bool IsReponse(Message message) => true;
+        public override bool IsReponse(Message message) => message.Response?["newCompatibilityConfiguration"] != null;
     }
 }

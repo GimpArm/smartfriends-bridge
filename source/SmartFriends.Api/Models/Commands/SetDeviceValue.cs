@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace SmartFriends.Api.Models.Commands
 {
@@ -15,6 +16,6 @@ namespace SmartFriends.Api.Models.Commands
             DeviceId = deviceId;
             Value = value;
         }
-        public override bool IsReponse(Message message) => false;
+        public override bool IsReponse(Message message) => throw new NotImplementedException($"Cannot wait for reponse from command {GetType()}");
     }
 }
