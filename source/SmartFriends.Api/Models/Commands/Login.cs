@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SmartFriends.Api.Models.Commands
 {
-    public class Login: CommandBase
+    public class Login : CommandBase
     {
         [JsonProperty("username")]
         public string Username { get; }
@@ -19,7 +20,7 @@ namespace SmartFriends.Api.Models.Commands
         [JsonProperty("shApiVersion")]
         public string ShApiVersion { get; }
 
-        public Login(string username, string digest, string cSynmbol, string shcVersion, string shApiVersion): base("login")
+        public Login(string username, string digest, string cSynmbol, string shcVersion, string shApiVersion) : base("login")
         {
             Username = username;
             Digest = digest;
@@ -27,5 +28,7 @@ namespace SmartFriends.Api.Models.Commands
             ShcVersion = shcVersion;
             ShApiVersion = shApiVersion;
         }
+        public override bool SkipEnsure => true;
+        public override bool IsReponse(Message message) => !string.IsNullOrEmpty(message.Response?["sessionID"]?.Value<string>());
     }
 }

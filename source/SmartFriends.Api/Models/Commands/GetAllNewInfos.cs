@@ -1,8 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace SmartFriends.Api.Models.Commands
 {
-    public class GetAllNewInfos: CommandBase
+    public class GetAllNewInfos : CommandBase
     {
         [JsonProperty("timestamp")]
         public long Timestamp { get; set; }
@@ -19,5 +20,7 @@ namespace SmartFriends.Api.Models.Commands
             CCVersion = ccVersion;
             LTVersion = ltVersion;
         }
+
+        public override bool IsReponse(Message message) => (message.Response?["currentTimestamp"]?.Value<long>() ?? 0) > 0;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using SmartFriends.Api.Helpers;
+using SmartFriends.Api.Interfaces;
 using SmartFriends.Api.Models;
 using SmartFriends.Api.Models.Commands;
 using System;
@@ -8,13 +10,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using SmartFriends.Api.Helpers;
-using SmartFriends.Api.Interfaces;
 
 namespace SmartFriends.Api
 {
-    public class Session: IHostedService, IDisposable
+    public class Session : IHostedService, IDisposable
     {
         private long _lastUpdate;
         private Thread _refreshThread;
@@ -52,7 +51,7 @@ namespace SmartFriends.Api
                 _refreshThread.Start(_tokenSource.Token);
                 return true;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 _logger.LogError(e, "Failed to open connection");
                 return false;
@@ -64,14 +63,14 @@ namespace SmartFriends.Api
             return DeviceMasters.FirstOrDefault(x => x.Id == id);
         }
 
-        public async Task<bool> SetDeviceValue(int id, string kind,  bool value)
+        public async Task<bool> SetDeviceValue(int id, string kind, bool value)
         {
             var device = GetDevice(id);
 
             var command = device?.GetDigitalCommand(kind, value);
             if (command == null) return false;
 
-            if (!await _client.SendCommand(command)) return false;
+            await _client.SendCommand(command);
 
             device.UpdateValue(kind, command.Value);
             return true;
@@ -84,7 +83,7 @@ namespace SmartFriends.Api
             var command = device?.GetAnalogCommand(kind, value);
             if (command == null) return false;
 
-            if (!await _client.SendCommand(command)) return false;
+            await _client.SendCommand(command);
 
             device.UpdateValue(kind, command.Value);
             return true;
@@ -97,7 +96,7 @@ namespace SmartFriends.Api
             var command = device?.GetKeywordCommand(kind, value);
             if (command == null) return false;
 
-            if (!await _client.SendCommand(command)) return false;
+            await _client.SendCommand(command);
 
             device.UpdateValue(kind, command.Value);
 
@@ -111,7 +110,7 @@ namespace SmartFriends.Api
             var command = device?.GetHsvCommand(kind, value);
             if (command == null) return false;
 
-            if (!await _client.SendCommand(command)) return false;
+            await _client.SendCommand(command);
 
             device.UpdateValue(kind, command.Value);
 
@@ -130,55 +129,57 @@ namespace SmartFriends.Api
 
         public async Task RefreshDevices()
         {
-            Message message = null;
+            Message lastMessage = null;
             try
             {
-                message = await _client.SendAndReceiveCommand<Message>(new GetAllNewInfos(_lastUpdate), 5000);
-                var result = message.Response;
-                _lastUpdate = result?["currentTimestamp"]?.Value<long>() ?? throw new Exception("Server did not respond.");
-                if (!_definitions.Any())
+                await _client.SendAndReceiveCommand<Message>(new GetAllNewInfos(_lastUpdate), message =>
                 {
-                    var definitions = result["newCompatibilityConfiguration"]?["compatibleRadioStandards"]?.ToObject<CompatibleDevices[]>()?.SelectMany(x => x.Definitions);
-                    _definitions.AddRange(definitions?.Where(x => x.DeviceType != null) ?? Array.Empty<DeviceDefinition>());
-                }
-                _rooms.AddRange(result["newRoomInfos"]?.ToObject<RoomInfo[]>()?.Where(x => x.RoomName != "${Service}") ?? Array.Empty<RoomInfo>());
-
-                if (result["newDeviceInfos"].HasValues)
-                {
-                    Raw = result;
-                }
-                var deviceInfo = result["newDeviceInfos"]?.ToObject<DeviceInfo[]>() ?? Array.Empty<DeviceInfo>();
-                Parallel.ForEach(deviceInfo, x =>
-                {
-                    x.Definition = _definitions.FirstOrDefault(y => y.DeviceDesignation == x.DeviceDesignation);
-                });
-                foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId == 0 ? x.DeviceId : x.MasterDeviceId))
-                {
-                    var masterId = masterDevice.Key;
-                    if (DeviceMasters.Any(x => x.Id == masterId)) continue;
-
-                    var devices = masterDevice.ToArray();
-                    var room = _rooms.FirstOrDefault(x => devices.Any(y => y.RoomId == x.RoomId));
-                    if (room == null) continue;
-
-                    var master = new DeviceMaster(masterId, room, devices)
+                    lastMessage = message;
+                    _lastUpdate = message.Response?["currentTimestamp"]?.Value<long>() ?? throw new Exception("Server did not respond.");
+                    if (!_definitions.Any())
                     {
-                        GatewayDevice = _client.GatewayDevice
-                    };
-                    DeviceMasters.Add(master);
-                }
+                        var definitions = message.Response["newCompatibilityConfiguration"]?["compatibleRadioStandards"]?.ToObject<CompatibleDevices[]>()?.SelectMany(x => x.Definitions);
+                        _definitions.AddRange(definitions?.Where(x => x.DeviceType != null) ?? Array.Empty<DeviceDefinition>());
+                    }
+                    _rooms.AddRange(message.Response["newRoomInfos"]?.ToObject<RoomInfo[]>()?.Where(x => x.RoomName != "${Service}") ?? Array.Empty<RoomInfo>());
 
-                var values = result["newDeviceValues"]?.ToObject<DeviceValue[]>() ?? Array.Empty<DeviceValue>();
-                foreach (var value in values)
-                {
-                    ClientDeviceUpdated(this, value);
-                }
+                    if (message.Response["newDeviceInfos"].HasValues)
+                    {
+                        Raw = message.Response;
+                    }
+                    var deviceInfo = message.Response["newDeviceInfos"]?.ToObject<DeviceInfo[]>() ?? Array.Empty<DeviceInfo>();
+                    Parallel.ForEach(deviceInfo, x =>
+                    {
+                        x.Definition = _definitions.FirstOrDefault(y => y.DeviceDesignation == x.DeviceDesignation);
+                    });
+                    foreach (var masterDevice in deviceInfo.GroupBy(x => x.MasterDeviceId == 0 ? x.DeviceId : x.MasterDeviceId))
+                    {
+                        var masterId = masterDevice.Key;
+                        if (DeviceMasters.Any(x => x.Id == masterId)) continue;
 
-                Ready = true;
+                        var devices = masterDevice.ToArray();
+                        var room = _rooms.FirstOrDefault(x => devices.Any(y => y.RoomId == x.RoomId));
+                        if (room == null) continue;
+
+                        var master = new DeviceMaster(masterId, room, devices)
+                        {
+                            GatewayDevice = _client.GatewayDevice
+                        };
+                        DeviceMasters.Add(master);
+                    }
+
+                    var values = message.Response["newDeviceValues"]?.ToObject<DeviceValue[]>() ?? Array.Empty<DeviceValue>();
+                    foreach (var value in values)
+                    {
+                        ClientDeviceUpdated(this, value);
+                    }
+
+                    Ready = true;
+                }, 5000);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                _logger.LogError(e, $"Refresh failed\n{JsonConvert.SerializeObject(message)}");
+                _logger.LogError(e, $"Refresh failed\n{lastMessage}");
             }
         }
 
@@ -186,7 +187,7 @@ namespace SmartFriends.Api
         {
             try
             {
-                var token = (CancellationToken) input;
+                var token = (CancellationToken)input;
                 while (!token.IsCancellationRequested)
                 {
                     RefreshDevices().Wait(token);

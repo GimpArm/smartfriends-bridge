@@ -1,7 +1,9 @@
 ﻿namespace SmartFriends.Api.Models.Commands
 {
-    public class GetCompatibilityConfiguration: CommandBase
+    public class GetCompatibilityConfiguration : CommandBase
     {
-        public GetCompatibilityConfiguration() :base("getCompatibilityConfiguration") { }
+        public GetCompatibilityConfiguration() : base("getCompatibilityConfiguration") { }
+
+        public override bool IsReponse(Message message) => true;
     }
 }

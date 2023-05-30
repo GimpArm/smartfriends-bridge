@@ -15,5 +15,6 @@ namespace SmartFriends.Api.Models.Commands
             DeviceId = deviceId;
             Value = value;
         }
+        public override bool IsReponse(Message message) => false;
     }
 }

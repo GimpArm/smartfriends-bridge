@@ -6,8 +6,6 @@ using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 using SmartFriends.Api.Models.Commands;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Security;
@@ -26,7 +24,6 @@ namespace SmartFriends.Api
         private readonly SemaphoreSlim _connectionSemaphore = new SemaphoreSlim(1, 1);
         private readonly Configuration _configuration;
         private readonly ILogger _logger;
-        private readonly ConcurrentQueue<Message> _messageQueue = new ConcurrentQueue<Message>();
 
         private TcpClient _client;
         private SslStream _stream;
@@ -39,6 +36,7 @@ namespace SmartFriends.Api
         public string GatewayDevice => _deviceInfo?.Hardware;
 
         public event EventHandler<DeviceValue> DeviceUpdated;
+        public event EventHandler<Message> MessageReceived;
 
         public Client(Configuration configuration, ILogger logger)
         {
@@ -133,29 +131,33 @@ namespace SmartFriends.Api
             return Task.CompletedTask;
         }
 
-        public async Task<T> SendAndReceiveCommand<T>(CommandBase command, int timeout = 2500)
+        public async Task SendAndReceiveCommand<T>(CommandBase command, Action<T> action, int timeout = 2500)
         {
-            var message = await SendCommand(command, false, timeout);
-            if (typeof(T) == typeof(Message))
+            EventHandler<Message> handler = null;
+            handler = (object _, Message message) =>
             {
-                return (T)(object)message;
-            }
-            return message == null ? default : message.Response.ToObject<T>();
+                if (!command.IsReponse(message)) return;
+
+                MessageReceived -= handler;
+                if (typeof(T) == typeof(Message))
+                {
+                    action.Invoke((T)(object)message);
+                }
+                else
+                {
+                    action.Invoke(message == null ? default : message.Response.ToObject<T>());
+                }
+            };
+            MessageReceived += handler;
+            await SendCommand(command, timeout);
         }
 
-        public async Task<bool> SendCommand(CommandBase command, int timeout = 2500)
+        public async Task SendCommand(CommandBase command, int timeout = 2500)
         {
-            var message = await SendCommand(command, false);
-            return message?.ResponseMessage?.Equals("success", StringComparison.InvariantCultureIgnoreCase) ?? false;
-        }
-
-        private async Task<Message> SendCommand(CommandBase command, bool skipEnsure, int timeout = 2500)
-        {
-            if (!skipEnsure)
+            if (!command.SkipEnsure)
             {
                 await EnsureConnection();
             }
-            Message message;
             command.SessionId = _deviceInfo?.SessionId;
             var json = Serialize(command);
             _logger.LogDebug($"Send: {json}");
@@ -163,32 +165,38 @@ namespace SmartFriends.Api
             using var token = new CancellationTokenSource(timeout);
             try
             {
-                //Clear the queue so we don't get old messages.
-                while (_messageQueue.TryDequeue(out message))
-                {
-                    _logger.LogInformation($"Abandoned message {JsonConvert.SerializeObject(message)}");
-                }
-
                 await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
-                while (!_messageQueue.TryDequeue(out message) && !token.IsCancellationRequested)
-                {
-                    await Task.Delay(10, token.Token);
-                }
             }
             finally
             {
                 _commandSemaphore.Release();
             }
-            return message;
         }
 
-        private async Task StartSession()
+        private Task StartSession()
         {
             _logger.LogInformation($"Logging in as {_configuration.Username}");
-            var info = await SendCommand(new Hello(_configuration.Username), true);
-            var digest = LoginHelper.CalculateDigest(_configuration.Password, info.Response.ToObject<SaltInfo>());
-            var message = await SendCommand(new Login(_configuration.Username, digest, _configuration.CSymbol + _configuration.CSymbolAddon, _configuration.ShcVersion, _configuration.ShApiVersion), true);
-            _deviceInfo = message.Response.ToObject<GatewayInfo>();
+            var finished = false;
+
+            _ = SendAndReceiveCommand<SaltInfo>(new Hello(_configuration.Username), info =>
+            {
+                if (info == null)
+                {
+                    _logger.LogInformation("Invalid Salt");
+                    finished = true;
+                    return;
+                }
+
+                var digest = LoginHelper.CalculateDigest(_configuration.Password, info);
+                SendAndReceiveCommand<GatewayInfo>(new Login(_configuration.Username, digest, _configuration.CSymbol + _configuration.CSymbolAddon, _configuration.ShcVersion, _configuration.ShApiVersion),
+                    gateway =>
+                    {
+                        _deviceInfo = gateway;
+                        finished = true;
+                    }).ConfigureAwait(false);
+            }).ConfigureAwait(false);
+
+            return Task.Run(async () => { while (!finished) await Task.Delay(10); });
         }
 
         private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true;
@@ -228,12 +236,7 @@ namespace SmartFriends.Api
                     }
                     catch
                     {
-                        // Smartfriends problably sent 2 messages packed inside 1.
-                        _logger.LogInformation($"Received invalid json message, will try to look for multiple objects: {messageData}");
-                        foreach (var message in ParseMultiMessage(messageData))
-                        {
-                            HandleMessage(message);
-                        }
+                        _logger.LogInformation($"Received invalid json message: {messageData}");
                     }
                 }
             }
@@ -252,6 +255,12 @@ namespace SmartFriends.Api
         {
             if (message == null || message.ResponseCode == 5) return;
 
+            if (message.ResponseCode == -1)
+            {
+                _logger.LogError($"ErrorCode: {message.Response?["errorCode"]}");
+                return;
+            }
+
             switch (message.ResponseMessage)
             {
                 case "newDeviceValue":
@@ -267,67 +276,8 @@ namespace SmartFriends.Api
                     _logger.LogInformation($"Received new device: {message.Response}");
                     break;
                 default:
-                    _messageQueue.Enqueue(message);
+                    MessageReceived?.Invoke(this, message);
                     break;
-            }
-        }
-
-        private IEnumerable<Message> ParseMultiMessage(StringBuilder input)
-        {
-            var openBrace = 0;
-            var openSingleQuote = false;
-            var openDoubleQuote = false;
-            var messageData = new StringBuilder();
-            for (var i = 0; i < input.Length; ++i)
-            {
-                switch (input[i])
-                {
-                    case '}':
-                        if (!openSingleQuote && !openDoubleQuote)
-                        {
-                            openBrace--;
-                            if (openBrace == 0)
-                            {
-                                messageData.Append(input[i]);
-                                var message = Deserialize<Message>(messageData.ToString());
-                                messageData.Clear();
-                                if (message != null)
-                                {
-                                    yield return message;
-                                }
-                            }
-                        }
-                        break;
-                    case '{':
-                        if (!openSingleQuote && !openDoubleQuote)
-                        {
-                            openBrace++;
-                        }
-                        messageData.Append(input[i]);
-                        break;
-                    case '"':
-                        if (!openSingleQuote)
-                        {
-                            openDoubleQuote = !openDoubleQuote;
-                        }
-                        messageData.Append(input[i]);
-                        break;
-                    case '\'':
-                        if (!openDoubleQuote)
-                        {
-                            openSingleQuote = !openSingleQuote;
-                        }
-                        messageData.Append(input[i]);
-                        break;
-                }
-            }
-            if (messageData.Length > 5)
-            {
-                var message = Deserialize<Message>(messageData.ToString());
-                if (message != null)
-                {
-                    yield return message;
-                }
             }
         }
 
@@ -335,7 +285,6 @@ namespace SmartFriends.Api
         {
             return JsonConvert.SerializeObject(input) + "\n";
         }
-
 
         private T Deserialize<T>(string input)
         {
@@ -349,7 +298,7 @@ namespace SmartFriends.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unable to parse message");
-                return default(T);
+                return default;
             }
         }
     }

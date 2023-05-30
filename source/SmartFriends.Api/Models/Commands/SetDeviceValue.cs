@@ -2,7 +2,7 @@
 
 namespace SmartFriends.Api.Models.Commands
 {
-    public class SetDeviceValue: CommandBase
+    public class SetDeviceValue : CommandBase
     {
         [JsonProperty("deviceID")]
         public int DeviceId { get; set; }
@@ -15,5 +15,6 @@ namespace SmartFriends.Api.Models.Commands
             DeviceId = deviceId;
             Value = value;
         }
+        public override bool IsReponse(Message message) => false;
     }
 }

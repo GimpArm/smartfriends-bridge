@@ -15,5 +15,9 @@ namespace SmartFriends.Api.Models.Commands
             Command = command;
             SessionId = sessionId;
         }
+
+        public virtual bool SkipEnsure => false;
+
+        public abstract bool IsReponse(Message message);
     }
 }
