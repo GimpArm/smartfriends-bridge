@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using MQTTnet;
-using MQTTnet.Client.Connecting;
-using MQTTnet.Client.Disconnecting;
-using MQTTnet.Client.Options;
-using MQTTnet.Client.Receiving;
+using MQTTnet.Client;
 using MQTTnet.Extensions.ManagedClient;
 using MQTTnet.Formatter;
 using Newtonsoft.Json;
@@ -20,10 +9,18 @@ using Newtonsoft.Json.Serialization;
 using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 using SmartFriends.Mqtt.Models;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SmartFriends.Mqtt
 {
-    public class MqttClient: IDisposable
+    public class MqttClient : IDisposable
     {
         public const string DeviceMapFile = "deviceMap.json";
 
@@ -89,17 +86,21 @@ namespace SmartFriends.Mqtt
                 _tokenSource = new CancellationTokenSource();
 
                 _client = _mqttFactory.CreateManagedMqttClient();
-                _client.ConnectedHandler = new MqttClientConnectedHandlerDelegate(ConnectedHandler);
-                _client.DisconnectedHandler = new MqttClientDisconnectedHandlerDelegate(DisconnectedHandler);
-                _client.ApplicationMessageReceivedHandler = new MqttApplicationMessageReceivedHandlerDelegate(MessageReceived);
+                _client.ConnectedAsync += ConnectedHandler;
+                _client.DisconnectedAsync += DisconnectedHandler;
+                _client.ApplicationMessageReceivedAsync += MessageReceived;
 
                 var options = new ManagedMqttClientOptionsBuilder()
                     .WithAutoReconnectDelay(TimeSpan.FromSeconds(5))
                     .WithClientOptions(ClientOptions())
                     .Build();
 
-                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic($"{_mqttConfig.BaseTopic}/#").Build());
-                await _client.SubscribeAsync(new MqttTopicFilterBuilder().WithTopic("home-assistant/#").Build());
+                var subscriptionOptions = _mqttFactory.CreateSubscribeOptionsBuilder()
+                    .WithTopicFilter($"{_mqttConfig.BaseTopic}/#")
+                    .WithTopicFilter("home-assistant/#")
+                    .Build();
+
+                await _client.SubscribeAsync(subscriptionOptions.TopicFilters);
                 await _client.StartAsync(options);
 
                 _keepAliveThread = new Thread(Keepalive);
@@ -143,7 +144,7 @@ namespace SmartFriends.Mqtt
             if (_client == null || !_client.IsConnected) return;
             try
             {
-                await UpdateStatus(false, CancellationToken.None);
+                await UpdateStatus(false);
                 await _client.StopAsync();
             }
             catch (Exception e)
@@ -193,25 +194,26 @@ namespace SmartFriends.Mqtt
 
                 _typeTemplateEngine.Merge(payload, map, deviceId);
 
-                await _client.PublishAsync(
+                await _client.EnqueueAsync(
                     new MqttApplicationMessage
                     {
                         Topic = $"homeassistant/{map.Type}/{deviceId}/{map.Class ?? map.Type}/config",
                         ContentType = "application/json",
                         Retain = true,
-                        Payload = Encoding.UTF8.GetBytes(payload.ToString())
-                    },
+                        PayloadSegment = Encoding.UTF8.GetBytes(payload.ToString())
+                    });
+                await _client.EnqueueAsync(
                     new MqttApplicationMessage
                     {
                         Topic = $"{_mqttConfig.BaseTopic}/{deviceId}",
                         ContentType = "application/json",
                         Retain = true,
-                        Payload = MakePayload(device)
+                        PayloadSegment = MakePayload(device)
                     }
                 );
             }
 
-            await UpdateStatus(true, CancellationToken.None);
+            await UpdateStatus(true);
         }
 
         public async Task DeviceUpdated(DeviceMaster deviceInfo, DeviceValue value)
@@ -221,30 +223,35 @@ namespace SmartFriends.Mqtt
 
             _logger.LogInformation($"Device update {IdPrefix}{device.Id}");
 
-            await _client.PublishAsync(new MqttApplicationMessage
+            await _client.EnqueueAsync(new MqttApplicationMessage
             {
                 Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/state",
                 ContentType = "text/plain",
                 Retain = true,
-                Payload = MakePayload(deviceInfo.State)
+                PayloadSegment = MakePayload(deviceInfo.State)
             });
-            await _client.PublishAsync(deviceInfo.Devices.Where(x => x.Value.CurrentValue != null).Select(x => new MqttApplicationMessage
+            foreach (var message in deviceInfo.Devices.Where(x => x.Value.CurrentValue != null).Select(x => new MqttApplicationMessage
             {
                 Topic = $"{_mqttConfig.BaseTopic}/{IdPrefix}{device.Id}/{x.Key}",
                 ContentType = "text/plain",
                 Retain = true,
-                Payload = MakePayload(x.Value.CurrentValue)
-            }));
+                PayloadSegment = MakePayload(x.Value.CurrentValue)
+            }))
+            {
+                await _client.EnqueueAsync(message);
+            }
         }
 
-        private void ConnectedHandler(MqttClientConnectedEventArgs e)
+        private Task ConnectedHandler(MqttClientConnectedEventArgs e)
         {
             _logger.LogInformation($"Client Connected to mqtt{(_mqttConfig.UseSsl ? "s" : string.Empty)}://{_mqttConfig.Server}:{_mqttConfig.Port}");
+            return Task.CompletedTask;
         }
 
-        private void DisconnectedHandler(MqttClientDisconnectedEventArgs e)
+        private Task DisconnectedHandler(MqttClientDisconnectedEventArgs e)
         {
             _logger.LogInformation($"Client Disconnected {e.Reason}");
+            return Task.CompletedTask;
         }
 
         private async Task MessageReceived(MqttApplicationMessageReceivedEventArgs e)
@@ -254,7 +261,7 @@ namespace SmartFriends.Mqtt
             var topicParts = e.ApplicationMessage.Topic.Split("/");
             if (topicParts.Length < 3 || !topicParts.Last().Equals("set", StringComparison.InvariantCultureIgnoreCase)) return;
 
-            var payload = e.ApplicationMessage.Payload != null ? Encoding.UTF8.GetString(e.ApplicationMessage.Payload) : string.Empty;
+            var payload = e.ApplicationMessage.PayloadSegment != null ? Encoding.UTF8.GetString(e.ApplicationMessage.PayloadSegment) : string.Empty;
 
             _logger.LogInformation($"Received '{e.ApplicationMessage.Topic}': {payload}");
 
@@ -268,14 +275,14 @@ namespace SmartFriends.Mqtt
             }
         }
 
-        private async Task UpdateStatus(bool online, CancellationToken token)
+        private async Task UpdateStatus(bool online)
         {
-            await _client.PublishAsync(new MqttApplicationMessage
+            await _client.EnqueueAsync(new MqttApplicationMessage
             {
                 Topic = $"{_mqttConfig.BaseTopic}/bridge/state",
                 Retain = true,
-                Payload = Encoding.UTF8.GetBytes(online ? "online" : "offline")
-            }, token);
+                PayloadSegment = Encoding.UTF8.GetBytes(online ? "online" : "offline")
+            });
         }
 
         private void Keepalive(object input)
@@ -285,7 +292,7 @@ namespace SmartFriends.Mqtt
                 var token = (CancellationToken)input;
                 while (!token.IsCancellationRequested && (_client?.IsConnected ?? false))
                 {
-                    UpdateStatus(true, token).GetAwaiter().GetResult();
+                    UpdateStatus(true).GetAwaiter().GetResult();
 
                     //3 minutes
                     Task.Delay(180000, token).Wait(token);
