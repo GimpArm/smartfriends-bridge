@@ -131,28 +131,54 @@ namespace SmartFriends.Api
             return Task.CompletedTask;
         }
 
-        public async Task SendAndReceiveCommand<T>(CommandBase command, Action<T> action, int timeout = 2500)
+        public Task SendAndReceiveCommand<T>(CommandBase command, Action<T> action, int timeout = 2500)
         {
+            return SendAndReceiveCommand<T>(command, a => { action.Invoke(a); return Task.CompletedTask; }, timeout);
+        }
+
+        public Task SendAndReceiveCommand<T>(CommandBase command, Func<T, Task> action, int timeout = 2500)
+        {
+            var finished = false;
             EventHandler<Message> handler = null;
-            handler = (object _, Message message) =>
+            handler = async (object _, Message message) =>
             {
                 if (!command.IsReponse(message)) return;
-
-                MessageReceived -= handler;
-                if (typeof(T) == typeof(Message))
+                try
                 {
-                    action.Invoke((T)(object)message);
+                    MessageReceived -= handler;
+                    if (typeof(T) == typeof(Message))
+                    {
+                        await action.Invoke((T)(object)message);
+                    }
+                    else
+                    {
+                        await action.Invoke(message == null ? default : message.Response.ToObject<T>());
+                    }
                 }
-                else
+                finally
                 {
-                    action.Invoke(message == null ? default : message.Response.ToObject<T>());
+                    finished = true;
                 }
             };
             MessageReceived += handler;
-            await SendCommand(command, timeout);
+            _ = SendCommand(command).ConfigureAwait(false);
+
+            //Wait until the whole operation completes
+            return Task.Run(async () =>
+            {
+                try
+                {
+                    using var token = new CancellationTokenSource(timeout);
+                    while (!finished && !token.IsCancellationRequested)
+                    {
+                        await Task.Delay(10, token.Token);
+                    }
+                }
+                catch (TaskCanceledException) { }
+            });
         }
 
-        public async Task SendCommand(CommandBase command, int timeout = 2500)
+        public async Task SendCommand(CommandBase command)
         {
             if (!command.SkipEnsure)
             {
@@ -162,10 +188,9 @@ namespace SmartFriends.Api
             var json = Serialize(command);
             _logger.LogDebug($"Send: {json}");
             await _commandSemaphore.WaitAsync();
-            using var token = new CancellationTokenSource(timeout);
             try
             {
-                await _stream.WriteAsync(Encoding.UTF8.GetBytes(json), token.Token);
+                await _stream.WriteAsync(Encoding.UTF8.GetBytes(json));
             }
             finally
             {
@@ -173,30 +198,25 @@ namespace SmartFriends.Api
             }
         }
 
-        private Task StartSession()
+        private async Task StartSession()
         {
             _logger.LogInformation($"Logging in as {_configuration.Username}");
-            var finished = false;
 
-            _ = SendAndReceiveCommand<SaltInfo>(new Hello(_configuration.Username), info =>
+            await SendAndReceiveCommand<SaltInfo>(new Hello(_configuration.Username), async info =>
             {
                 if (info == null)
                 {
                     _logger.LogInformation("Invalid Salt");
-                    finished = true;
                     return;
                 }
 
                 var digest = LoginHelper.CalculateDigest(_configuration.Password, info);
-                SendAndReceiveCommand<GatewayInfo>(new Login(_configuration.Username, digest, _configuration.CSymbol + _configuration.CSymbolAddon, _configuration.ShcVersion, _configuration.ShApiVersion),
+                await SendAndReceiveCommand<GatewayInfo>(new Login(_configuration.Username, digest, _configuration.CSymbol + _configuration.CSymbolAddon, _configuration.ShcVersion, _configuration.ShApiVersion),
                     gateway =>
                     {
                         _deviceInfo = gateway;
-                        finished = true;
                     }).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-
-            return Task.Run(async () => { while (!finished) await Task.Delay(10); });
+            });
         }
 
         private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => true;

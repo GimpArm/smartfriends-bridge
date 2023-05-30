@@ -14,6 +14,7 @@ namespace SmartFriends.Api.Interfaces
         Task Close();
         Task<bool> Open();
         Task SendAndReceiveCommand<T>(CommandBase command, Action<T> action, int timeout = 2500);
-        Task SendCommand(CommandBase command, int timeout = 2500);
+        Task SendAndReceiveCommand<T>(CommandBase command, Func<T, Task> action, int timeout = 2500);
+        Task SendCommand(CommandBase command);
     }
 }
