@@ -172,7 +172,6 @@ namespace SmartFriends.Mqtt
 
                 var payload = JObject.FromObject(new DeviceRegistration
                 {
-                    Name = name,
                     CommandTopic = $"{_mqttConfig.BaseTopic}/{deviceId}/set",
                     JsonAttributesTopic = $"{_mqttConfig.BaseTopic}/{deviceId}",
                     StateTopic = $"{_mqttConfig.BaseTopic}/{deviceId}/state",
