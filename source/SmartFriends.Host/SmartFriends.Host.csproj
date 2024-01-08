@@ -25,7 +25,7 @@
    </ItemGroup>
 
   <ItemGroup>
-    <None Include="appsettings.Development.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
 </Project>
