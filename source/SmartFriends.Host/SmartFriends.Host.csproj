@@ -1,28 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-   <PropertyGroup>
-      <TargetFramework>net60</TargetFramework>
-      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-      <DockerfileTag>gimparm/amd64-smartfriends-rest-api:beta</DockerfileTag>
-      <UserSecretsId>040deadd-7ebd-479b-babc-60a5f66425ec</UserSecretsId>
-   </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileTag>gimparm/amd64-smartfriends-rest-api:beta</DockerfileTag>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
 
-   <ItemGroup>
-      <None Include="..\SmartFriends.Api\CA.pem" Link="CA.pem">
-         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\SmartFriends.Api\CA.pem" Link="CA.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
-   <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="6.0.16" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
-      <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.18.1" />
-   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
+  </ItemGroup>
 
-   <ItemGroup>
-      <ProjectReference Include="..\SmartFriends.Api\SmartFriends.Api.csproj" />
-      <ProjectReference Include="..\SmartFriends.Mqtt\SmartFriends.Mqtt.csproj" />
-   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SmartFriends.Api\SmartFriends.Api.csproj" />
+    <ProjectReference Include="..\SmartFriends.Mqtt\SmartFriends.Mqtt.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
