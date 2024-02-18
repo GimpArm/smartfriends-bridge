@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
+using SmartFriends.Api.Helpers;
+using SmartFriends.Api.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SmartFriends.Api.Helpers;
-using SmartFriends.Api.Models;
 
 namespace SmartFriends.Api.JsonConvertes
 {
@@ -17,7 +17,7 @@ namespace SmartFriends.Api.JsonConvertes
             if (reader.TokenType == JsonToken.Null) return null;
 
             var result = new List<TextOption>();
-            var i = 0;
+            var i = 0L;
             while (reader.Read())
             {
                 if (reader.TokenType == JsonToken.EndArray) break;

@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SmartFriends.Api.JsonConvertes;
+using System.Collections.Generic;
 
 namespace SmartFriends.Api.Models
 {
@@ -20,11 +20,11 @@ namespace SmartFriends.Api.Models
 
         [JsonProperty("digitalValueOff")]
         [JsonConverter(typeof(SwitchingValueConverter))]
-        public int? DigitalValueOff { get; set; }
+        public long? DigitalValueOff { get; set; }
 
         [JsonProperty("digitalValueOn")]
         [JsonConverter(typeof(SwitchingValueConverter))]
-        public int? DigitalValueOn { get; set; }
+        public long? DigitalValueOn { get; set; }
 
         [JsonProperty("hidden")]
         public Dictionary<string, bool> Hidden { get; set; }

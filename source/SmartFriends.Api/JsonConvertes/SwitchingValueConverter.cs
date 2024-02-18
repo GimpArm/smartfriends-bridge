@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
-using System;
 using SmartFriends.Api.Models;
+using System;
 
 namespace SmartFriends.Api.JsonConvertes
 {
@@ -11,7 +11,7 @@ namespace SmartFriends.Api.JsonConvertes
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null) return 0;
+            if (reader.TokenType == JsonToken.Null) return 0L;
 
             switch (reader.Value.ToString().ToLower().Trim())
             {
@@ -22,7 +22,7 @@ namespace SmartFriends.Api.JsonConvertes
                 case "switchactuatoron":
                 case "lockingsystemlocked":
                 case "shutterup":
-                    return 1;
+                    return 1L;
                 case "false":
                 case "no":
                 case "n":
@@ -30,12 +30,12 @@ namespace SmartFriends.Api.JsonConvertes
                 case "switchactuatoroff":
                 case "lockingsystemunlocked":
                 case "shutterdown":
-                    return 0;
+                    return 0L;
                 case "shutterstop":
-                    return 2;
+                    return 2L;
             }
 
-            return Convert.ToInt32(reader.Value);
+            return Convert.ToInt64(reader.Value);
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)

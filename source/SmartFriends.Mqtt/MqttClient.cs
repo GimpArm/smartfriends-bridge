@@ -124,12 +124,12 @@ namespace SmartFriends.Mqtt
                 .WithTcpServer(_mqttConfig.Server, _mqttConfig.Port)
                 .WithKeepAlivePeriod(TimeSpan.FromSeconds(60))
                 .WithProtocolVersion(MqttProtocolVersion.V500)
-                .WithTls(x =>
+                .WithTlsOptions(x =>
                 {
-                    x.UseTls = _mqttConfig.UseSsl;
-                    x.IgnoreCertificateChainErrors = true;
-                    x.IgnoreCertificateRevocationErrors = true;
-                    x.AllowUntrustedCertificates = true;
+                    x.UseTls(_mqttConfig.UseSsl)
+                        .WithIgnoreCertificateChainErrors(true)
+                        .WithIgnoreCertificateRevocationErrors(true)
+                        .WithAllowUntrustedCertificates(true);
                 });
             if (!string.IsNullOrEmpty(_mqttConfig.User))
             {

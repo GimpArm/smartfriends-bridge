@@ -1,10 +1,10 @@
-﻿using SmartFriends.Api.Models.Commands;
+﻿using Newtonsoft.Json;
+using SmartFriends.Api.Helpers;
+using SmartFriends.Api.JsonConvertes;
+using SmartFriends.Api.Models.Commands;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json;
-using SmartFriends.Api.Helpers;
-using SmartFriends.Api.JsonConvertes;
 
 namespace SmartFriends.Api.Models
 {
@@ -78,7 +78,7 @@ namespace SmartFriends.Api.Models
             return GetKeywordCommand(kind, on ? "on" : "off");
         }
 
-        public SetDeviceValue GetAnalogCommand(string kind, int value)
+        public SetDeviceValue GetAnalogCommand(string kind, long value)
         {
             kind ??= Kind;
             if (!Devices.ContainsKey(kind)) return null;

@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SmartFriends.Api.Helpers;
+using SmartFriends.Mqtt.Models;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using SmartFriends.Api.Helpers;
-using SmartFriends.Mqtt.Models;
 
 namespace SmartFriends.Mqtt
 {
@@ -41,13 +41,13 @@ namespace SmartFriends.Mqtt
             if (File.Exists(path))
             {
                 var templates = JsonConvert.DeserializeObject<TypeTemplate[]>(File.ReadAllText(path));
-                var coverTemplate = templates.FirstOrDefault(x => x.Type == "cover" && x.Class == "shutter" && x.Parameters["state_stopped"] as string == "Stop");
+                var coverTemplate = templates.FirstOrDefault(x => x.Type == "cover" && x.Class == "shutter" && x.Parameters["state_stopped"] as long? == 0);
                 if (coverTemplate != null)
                 {
                     //Upgrade template
-                    coverTemplate.Parameters["state_stopped"] = 0;
-                    coverTemplate.Parameters["state_opening"] = 1;
-                    coverTemplate.Parameters["state_closing"] = 2;
+                    coverTemplate.Parameters["state_stopped"] = "Stop";
+                    coverTemplate.Parameters["state_opening"] = "Up";
+                    coverTemplate.Parameters["state_closing"] = "Down";
                     File.WriteAllText(path, templates.Serialize());
                 }
                 return templates;
@@ -66,9 +66,9 @@ namespace SmartFriends.Mqtt
                         {"position_template", "{{ 100 - value | int }}"},
                         {"set_position_topic", "{baseTopic}/{deviceId}/position/set"},
                         {"set_position_template", "{{ 100 - position }}"},
-                        {"state_stopped", 0},
-                        {"state_opening", 1 },
-                        {"state_closing", 2 },
+                        {"state_stopped", "Stop"},
+                        {"state_opening", "Up" },
+                        {"state_closing", "Down" },
                         {"payload_stop", "Stop"},
                         {"payload_open", "Up"},
                         {"payload_close", "Down"}

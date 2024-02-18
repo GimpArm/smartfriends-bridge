@@ -10,6 +10,6 @@ namespace SmartFriends.Api.Models
 
         [JsonProperty("value")]
         [JsonConverter(typeof(SwitchingValueConverter))]
-        public int Value { get; set; }
+        public long Value { get; set; }
     }
 }

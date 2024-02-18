@@ -9,9 +9,9 @@ namespace SmartFriends.Api.Models.Commands
         public int DeviceId { get; set; }
 
         [JsonProperty("value")]
-        public int Value { get; set; }
+        public long Value { get; set; }
 
-        public SetDeviceValue(int deviceId, int value) : base("setDeviceValue")
+        public SetDeviceValue(int deviceId, long value) : base("setDeviceValue")
         {
             DeviceId = deviceId;
             Value = value;

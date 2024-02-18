@@ -16,6 +16,6 @@ namespace SmartFriends.Api.Models
 
         [JsonProperty("value")]
         [JsonConverter((typeof(BooleanNumberConverter)))]
-        public int Value { get; set; }
+        public long Value { get; set; }
     }
 }
