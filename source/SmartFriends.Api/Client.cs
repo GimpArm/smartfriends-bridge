@@ -66,7 +66,9 @@ namespace SmartFriends.Api
                 var cert = X509Certificate.CreateFromCertFile(Path.Combine(new FileInfo(GetType().Assembly.Location).DirectoryName, "CA.pem"));
                 _client = new TcpClient(_configuration.Host, _configuration.Port);
                 _stream = new SslStream(_client.GetStream(), false, ValidateServerCertificate, null);
+#pragma warning disable SYSLIB0039 // Type or member is obsolete SmartFriends hub uses obsolete encryption
                 await _stream.AuthenticateAsClientAsync(_configuration.Host, new X509CertificateCollection(new[] { cert }), SslProtocols.Tls, false);
+#pragma warning restore SYSLIB0039 // Type or member is obsolete
                 await EnsureReader(true);
                 await StartSession();
                 Connected = !string.IsNullOrEmpty(_deviceInfo?.SessionId);
