@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileTag>gimparm/amd64-smartfriends-rest-api:beta</DockerfileTag>
+    <DockerfileTag>gimparm/smartfriends-bridge:beta</DockerfileTag>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
