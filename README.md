@@ -189,6 +189,9 @@ As it can be seen, actions are sent using the device ID and the specific device 
 
 This is a simple use case: Controlling roller shutters (alias covers or rolling shutters...)
 
+See the official Home Assistant documentation for more information
+https://www.home-assistant.io/integrations/command_line/
+
 ![covers](https://raw.githubusercontent.com/GimpArm/hassio-addons/main/images/doc01.png)
 
 The example shown above needs the creation of 3 elements:
@@ -203,17 +206,21 @@ shell_command:
     shutter_down:      "curl http://127.0.0.1:5001/set/{{ device_id }}/rollingShutter/down"
     shutter_stop:      "curl http://127.0.0.1:5001/set/{{ device_id }}/rollingShutter/stop"
     shutter_position:  "curl http://127.0.0.1:5001/set/{{ device_id }}/position/{{ 100 - position }}"
-    switch_on:         "curl http://127.0.0.1:5001/set/{{ device_id }}/on"
-    switch_off:        "curl http://127.0.0.1:5001/set/{{ device_id }}/off"
-    switch_toggle:        "curl http://127.0.0.1:5001/set/{{ device_id }}/toggle"
 
-sensor:
-  - platform: command_line
-    name: shutter_position_office
-    command: "curl http://192.168.1.10:5001/get/10433/position"
-    unit_of_measurement: "%"
-    scan_interval: 5
-    value_template: '{{ 100 - value_json.currentValue }}'
+command_line:
+  - sensor:
+      name: shutter_position_office
+      command : 'curl http://127.0.0.1:5001/get/10433/position'
+      unit_of_measurement: '%'
+      scan_interval: 5
+      value_template: '{{ 100 - value_json.currentValue }}'
+  - switch:
+      name: Office Light
+      command_on: 'curl http://127.0.0.1:5001/set/14106/on'
+	  command_off: 'curl http://127.0.0.1:5001/set/14106/off'
+      scan_interval: 5
+	  command_state: 'curl http://127.0.0.1:5001/get/14106'
+	  value_template: '{{ value_json.state }}'
 
 cover:
   - platform: template
@@ -240,32 +247,6 @@ cover:
             device_id: 10433
             position: "{{ position }}"
 
-
-binary_sensor:
-  - platform: command_line
-    name: switch_officelight
-    device_class: light
-    command: "curl http://192.168.1.10:5001/get/14106"
-    scan_interval: 5
-    value_template: '{{ value_json.state }}'
-    payload_on: 1
-    payload_off: 0
-
-switch:
-  - platform: template
-    switches:
-      officelight:
-        friendly_name: "Office Light"
-        icon_template: "mdi:lightbulb"
-        value_template: '{{ is_state("binary_sensor.switch_officelight", "on") }}'
-        turn_on:
-          service: shell_command.switch_on
-          data:
-            device_id: 14106
-        turn_off:
-          service: shell_command.switch_off
-          data:
-            device_id: 14106
 ```
 
 
