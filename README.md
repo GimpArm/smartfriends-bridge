@@ -217,10 +217,10 @@ command_line:
   - switch:
       name: Office Light
       command_on: 'curl http://127.0.0.1:5001/set/14106/on'
-	  command_off: 'curl http://127.0.0.1:5001/set/14106/off'
+      command_off: 'curl http://127.0.0.1:5001/set/14106/off'
       scan_interval: 5
-	  command_state: 'curl http://127.0.0.1:5001/get/14106'
-	  value_template: '{{ value_json.state }}'
+      command_state: 'curl http://127.0.0.1:5001/get/14106'
+      value_template: '{{ value_json.state }}'
 
 cover:
   - platform: template
