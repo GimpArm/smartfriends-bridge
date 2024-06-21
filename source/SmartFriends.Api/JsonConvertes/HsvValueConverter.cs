@@ -1,8 +1,8 @@
-﻿using System;
-using System.Globalization;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SmartFriends.Api.Models;
+using System;
+using System.Globalization;
 
 namespace SmartFriends.Api.JsonConvertes
 {
@@ -29,7 +29,7 @@ namespace SmartFriends.Api.JsonConvertes
                         result = Convert.ToString(jValue, CultureInfo.InvariantCulture);
                         break;
                     case JsonToken.Date:
-                        result = (DateTime) jValue;
+                        result = (DateTime)jValue;
                         break;
                     case JsonToken.Boolean:
                         result = Convert.ToBoolean(jValue);
@@ -52,6 +52,31 @@ namespace SmartFriends.Api.JsonConvertes
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
+        }
+
+        public static bool TryParse(string json, out HsvValue value)
+        {
+            if (string.IsNullOrWhiteSpace(json) || !json.StartsWith('{') || !json.EndsWith('}'))
+            {
+                value = default!;
+                return false;
+            }
+            try
+            {
+                var obj = JObject.Parse(json);
+                if (!obj.HasValues || !obj.ContainsKey("h") || !obj.ContainsKey("s") || !obj.ContainsKey("v"))
+                {
+                    value = default!;
+                    return false;
+                }
+                value = obj.ToObject<HsvValue>();
+                return true;
+            }
+            catch
+            {
+                value = default!;
+                return false;
+            }
         }
     }
 }

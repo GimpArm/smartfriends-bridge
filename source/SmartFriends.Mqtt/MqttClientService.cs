@@ -1,16 +1,17 @@
-﻿using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SmartFriends.Api;
+using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
 using SmartFriends.Mqtt.Models;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace SmartFriends.Mqtt
 {
-    public class MqttClientService: IHostedService
+    public class MqttClientService : IHostedService
     {
         private readonly ILogger<MqttClientService> _logger;
         private readonly Session _smartfriendsSession;
@@ -67,10 +68,17 @@ namespace SmartFriends.Mqtt
             if (int.TryParse(payload, out var intValue))
             {
                 await _smartfriendsSession.SetDeviceValue(deviceId, kind, intValue);
+                return;
             }
             if (bool.TryParse(payload, out var boolValue))
             {
                 await _smartfriendsSession.SetDeviceValue(deviceId, kind, boolValue);
+                return;
+            }
+            if (HsvValueConverter.TryParse(payload, out var hsvValue))
+            {
+                await _smartfriendsSession.SetDeviceValue(deviceId, kind, hsvValue);
+                return;
             }
 
             await _smartfriendsSession.SetDeviceValue(deviceId, kind, payload);
