@@ -13,7 +13,7 @@ namespace SmartFriends.Api.JsonConvertes
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if (reader.TokenType == JsonToken.Null) return false;
+            if (reader.TokenType == JsonToken.Null) return new FuzzyValue(null);
             object result;
             if (reader.TokenType == JsonToken.StartObject)
             {
