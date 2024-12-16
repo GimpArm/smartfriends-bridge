@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SmartFriends.Api.Helpers;
 using SmartFriends.Api.Interfaces;
@@ -167,13 +168,18 @@ namespace SmartFriends.Api
                         };
                         DeviceMasters.Add(master);
                     }
-
-                    var values = message.Response["newDeviceValues"]?.ToObject<DeviceValue[]>() ?? Array.Empty<DeviceValue>();
-                    foreach (var value in values)
+                    try
                     {
-                        ClientDeviceUpdated(this, value);
+                        var values = message.Response["newDeviceValues"]?.ToObject<DeviceValue[]>() ?? Array.Empty<DeviceValue>();
+                        foreach (var value in values)
+                        {
+                            ClientDeviceUpdated(this, value);
+                        }
                     }
-
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, $"Failed to deserialize device value\n{JsonConvert.SerializeObject(message.Response["newDeviceValues"])}");
+                    }
                     Ready = true;
                 }, 5000);
             }
