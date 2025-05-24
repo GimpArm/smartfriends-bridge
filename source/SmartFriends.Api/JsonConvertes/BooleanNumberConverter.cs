@@ -31,11 +31,15 @@ namespace SmartFriends.Api.JsonConvertes
                         return 0L;
                     }
             }
-            if (long.TryParse(reader.ReadAsString(), out var longResult))
+            try
             {
-                return longResult;
+                return Convert.ToInt64(reader.Value);
             }
-            return 0L;
+            catch
+            {
+                Console.Write($"Unknown Boolean Value: {reader.Value}");
+                return 0L;
+            }
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
