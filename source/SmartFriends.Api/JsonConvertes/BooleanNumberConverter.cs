@@ -14,19 +14,28 @@ namespace SmartFriends.Api.JsonConvertes
 
             switch (reader.Value.ToString().ToLower().Trim())
             {
+                case "burglar":
                 case "true":
                 case "yes":
                 case "y":
                 case "1":
-                    return 1L;
+                    {
+                        return 1L;
+                    }
+                case "clear":
                 case "false":
                 case "no":
                 case "n":
                 case "0":
-                    return 0L;
+                    {
+                        return 0L;
+                    }
             }
-
-            return Convert.ToInt64(reader.Value);
+            if (long.TryParse(reader.ReadAsString(), out var longResult))
+            {
+                return longResult;
+            }
+            return 0L;
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
