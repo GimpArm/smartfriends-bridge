@@ -43,14 +43,15 @@ REST API is a more simple passive system. You must manually configure entities i
     "ShApiVersion":  "2.20" #-------> Extra param 4
   },
   "Mqtt": {
-    "Enable": false, #-------------------> Flag whether to enabled or disable the MQTT client.
+    "Enabled": false, #-------------------> Flag whether to enabled or disable the MQTT client.
     "DataPath": "/config/smartfriends2mqtt", #---------------------> Directory path to where the deviceMap.json and typeTemplate.json files are stored.
     "BaseTopic": "smartfriends2mqtt", #---> Base MQTT topic to store device information. Ok to leave as is.
     "Server": "homeassistant", #----------> Broker server name or ip.
     "Port": 1883, #-----------------------> Broker port, most likely 1883.
     "User": "mqtt", #---------------------> Broker client username.
     "Password": "4mqPass!", #-------------> Broker client password.
-    "UseSsl": false #--------------------> Flag whether the broker requires SSL or not.
+    "UseSsl": false, #--------------------> Flag whether the broker requires SSL or not.
+    "ProtocolVersion": "V500" #-----------> One of V310=3, V311=4, V500=5. If you have no problems, no need to change.
   }
 }
 ```
@@ -321,7 +322,7 @@ If there is no entry in the deviceMap.json file for a device then it will not be
   "Id": number, #-------> (required) The ´id´ from the above print out.
   "Type": string, #-----> (required) The HASSIO device type to be presented as.
   "Class": string, #----> (optional) The HASSIO device class, not all device types have classes.
-  "Paramters": { #------> (optional) Key value override HASSIO settings and TypeTemplate for specific operation of the devices. See HASSIO MQTT device type specific documentation.
+  "Parameters": { #------> (optional) Key value override HASSIO settings and TypeTemplate for specific operation of the devices. See HASSIO MQTT device type specific documentation.
     "hassio_key1": value1,
     "hassio_key2": value2
   }
