@@ -1,10 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SmartFriends.Api;
 using SmartFriends.Api.Models;
-using System.Collections.Generic;
+using SmartFriends.Api.Models.Commands;
+using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace SmartFriends.Host.Controllers
 {
@@ -47,6 +46,20 @@ namespace SmartFriends.Host.Controllers
             if (master == null || !master.Devices.ContainsKey(kind)) return null;
 
             return master.Devices[kind];
+        }
+
+        [HttpGet("{id}/{kind?}")]
+        public async Task GetImage(int id, string kind = "camera")
+        {
+            var image = await _session.SendAction<ImageResponse>(id, kind, ObjectActionEnum.getImage);
+            if (image == null)
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
+                return;
+            }
+            Response.Headers.ContentType = image.Image.MimeType;
+            Response.Headers.ContentLength = image.Image.Data.Length;
+            await Response.Body.WriteAsync(image.Image.Data);
         }
 
         [HttpGet("{id}/{kind}/{value?}")]

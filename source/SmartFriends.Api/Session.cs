@@ -118,6 +118,30 @@ namespace SmartFriends.Api
             return true;
         }
 
+        public async Task<T> SendAction<T>(int id, string kind, ObjectActionEnum action)
+        {
+            var device = GetDevice(id);
+
+            var command = device?.GetActionCommand(kind, action);
+            if (command == null) return default;
+
+            var resultTask = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            await _client.SendAndReceiveCommand<T>(command, d =>
+            {
+                if (!resultTask.Task.IsCanceled)
+                {
+                    resultTask.SetResult(d);
+                }
+            });
+
+            await Task.WhenAny(resultTask.Task, Task.Delay(30000));
+            if (resultTask.Task.IsCompletedSuccessfully) return resultTask.Task.Result;
+
+            resultTask.TrySetCanceled();
+
+            return default;
+        }
+
         private void ClientDeviceUpdated(object sender, DeviceValue value)
         {
             var masterId = value.MasterDeviceId == 0 ? value.DeviceId : value.MasterDeviceId;
