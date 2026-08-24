@@ -104,6 +104,14 @@ namespace SmartFriends.Api.Models
             return new SetDeviceHsvValue(Devices[kind].Id, value);
         }
 
+        public ObjectAction GetActionCommand(string kind, ObjectActionEnum action)
+        {
+            kind ??= Kind;
+            if (!Devices.ContainsKey(kind)) return null;
+
+            return new ObjectAction(Devices[kind].Id, action);
+        }
+
         public bool SetValues(params DeviceValue[] values)
         {
             if (!values?.Any() ?? true) return false;
