@@ -1,17 +1,16 @@
 ﻿using Newtonsoft.Json;
 
-namespace SmartFriends.Api.Models
+namespace SmartFriends.Api.Models;
+
+public class ImageResponse
 {
-    public class ImageResponse
-    {
 
-        [JsonProperty("id")]
-        public int DeviceId { get; set; }
+    [JsonProperty("id")]
+    public int DeviceId { get; set; }
 
-        [JsonProperty("type")]
-        public string Type { get; set; }
+    [JsonProperty("type")]
+    public string Type { get; set; } = string.Empty;
 
-        [JsonProperty("image")]
-        public ImageData Image { get; set; }
-    }
+    [JsonProperty("image")]
+    public ImageData Image { get; set; } = new();
 }

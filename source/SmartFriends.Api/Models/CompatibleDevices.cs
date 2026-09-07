@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
 
-namespace SmartFriends.Api.Models
+namespace SmartFriends.Api.Models;
+
+public class CompatibleDevices
 {
-    public class CompatibleDevices
-    {
-        [JsonProperty("compatibleDevices")]
-        public DeviceDefinition[] Definitions { get; set; }
-    }
+    [JsonProperty("compatibleDevices")]
+    public DeviceDefinition[] Definitions { get; set; } = [];
 }

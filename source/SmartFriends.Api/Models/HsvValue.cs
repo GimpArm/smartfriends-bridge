@@ -1,16 +1,15 @@
 ﻿using Newtonsoft.Json;
 
-namespace SmartFriends.Api.Models
+namespace SmartFriends.Api.Models;
+
+public class HsvValue
 {
-    public class HsvValue
-    {
-        [JsonProperty("h")]
-        public int H { get; set; }
+    [JsonProperty("h")]
+    public int H { get; set; }
 
-        [JsonProperty("s")]
-        public int S { get; set; }
+    [JsonProperty("s")]
+    public int S { get; set; }
 
-        [JsonProperty("v")]
-        public int V { get; set; }
-    }
+    [JsonProperty("v")]
+    public int V { get; set; }
 }

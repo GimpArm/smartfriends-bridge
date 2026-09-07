@@ -1,15 +1,14 @@
-﻿namespace SmartFriends.Mqtt.Models
+﻿namespace SmartFriends.Mqtt.Models;
+
+public class MqttConfiguration
 {
-    public class MqttConfiguration
-    {
-        public bool Enabled { get; set; }
-        public string DataPath { get; set; }
-        public string BaseTopic { get; set; }
-        public string Server { get; set; }
-        public int Port { get; set; }
-        public string User { get; set; }
-        public string Password { get; set; }
-        public bool UseSsl { get; set; }
-        public string ProtocolVersion { get; set; }
-    }
+    public bool Enabled { get; set; }
+    public string DataPath { get; set; } = string.Empty;
+    public string BaseTopic { get; set; } = string.Empty;
+    public string Server { get; set; } = string.Empty;
+    public int Port { get; set; }
+    public string User { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public bool UseSsl { get; set; }
+    public string? ProtocolVersion { get; set; } = null;
 }

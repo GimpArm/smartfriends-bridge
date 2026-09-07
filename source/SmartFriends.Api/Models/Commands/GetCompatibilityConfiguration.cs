@@ -1,9 +1,8 @@
-﻿namespace SmartFriends.Api.Models.Commands
-{
-    public class GetCompatibilityConfiguration : CommandBase
-    {
-        public GetCompatibilityConfiguration() : base("getCompatibilityConfiguration") { }
+﻿namespace SmartFriends.Api.Models.Commands;
 
-        public override bool IsReponse(Message message) => message.Response?["newCompatibilityConfiguration"] != null;
-    }
+public class GetCompatibilityConfiguration : CommandBase
+{
+    public GetCompatibilityConfiguration() : base("getCompatibilityConfiguration") { }
+
+    public override bool IsReponse(Message message) => message.Response?["newCompatibilityConfiguration"] != null;
 }

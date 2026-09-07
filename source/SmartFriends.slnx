@@ -3,6 +3,6 @@
     <File Path="../README.md" />
   </Folder>
   <Project Path="SmartFriends.Api/SmartFriends.Api.csproj" />
-  <Project Path="SmartFriends.Host/SmartFriends.Host.csproj" />
+  <Project Path="SmartFriends.Host/SmartFriends.Host.csproj" DefaultStartup="true" />
   <Project Path="SmartFriends.Mqtt/SmartFriends.Mqtt.csproj" />
 </Solution>

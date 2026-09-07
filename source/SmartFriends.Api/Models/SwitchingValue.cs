@@ -1,15 +1,13 @@
 ﻿using Newtonsoft.Json;
 using SmartFriends.Api.JsonConvertes;
 
-namespace SmartFriends.Api.Models
-{
-    public class SwitchingValue
-    {
-        [JsonProperty("name")]
-        public string Name { get; set; }
+namespace SmartFriends.Api.Models;
 
-        [JsonProperty("value")]
-        [JsonConverter(typeof(SwitchingValueConverter))]
-        public long Value { get; set; }
-    }
+public class SwitchingValue
+{
+    [JsonProperty("name")] public string Name { get; set; } = string.Empty;
+
+    [JsonProperty("value")]
+    [JsonConverter(typeof(SwitchingValueConverter))]
+    public long Value { get; set; }
 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using SmartFriends.Api;
 using SmartFriends.Api.JsonConvertes;
 using SmartFriends.Api.Models;
@@ -12,10 +11,10 @@ builder.Logging.AddConsole().AddDebug();
 
 builder.Services.Configure<Configuration>(builder.Configuration.GetSection("SmartFriends"));
 builder.Services.Configure<MqttConfiguration>(builder.Configuration.GetSection("Mqtt"));
-builder.Services.AddSingleton(x => new Session(x.GetService<IOptions<Configuration>>().Value, x.GetService<ILogger<Session>>()));
-builder.Services.AddSingleton(x => new TypeTemplateEngine(x.GetService<IOptions<MqttConfiguration>>()?.Value));
-builder.Services.AddSingleton(x => new MqttClient(x.GetService<IOptions<MqttConfiguration>>()?.Value, x.GetService<ILogger<MqttClient>>(), x.GetService<TypeTemplateEngine>()));
-builder.Services.AddHostedService(x => x.GetService<Session>());
+builder.Services.AddSingleton<Session>();
+builder.Services.AddSingleton<TypeTemplateEngine>();
+builder.Services.AddSingleton<MqttClient>();
+builder.Services.AddHostedService(x => x.GetRequiredService<Session>());
 builder.Services.AddHostedService<MqttClientService>();
 builder.Services.AddControllers().AddNewtonsoftJson(x =>
 {

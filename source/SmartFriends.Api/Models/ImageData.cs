@@ -1,16 +1,15 @@
 ﻿using Newtonsoft.Json;
 
-namespace SmartFriends.Api.Models
+namespace SmartFriends.Api.Models;
+
+public class ImageData
 {
-    public class ImageData
-    {
-        [JsonProperty("mimeType")]
-        public string MimeType { get; set; }
+    [JsonProperty("mimeType")]
+    public string MimeType { get; set; } = string.Empty;
 
-        [JsonProperty("timestamp")]
-        public long TimeStamp { get; set; }
+    [JsonProperty("timestamp")]
+    public long TimeStamp { get; set; }
 
-        [JsonProperty("data")]
-        public byte[] Data { get; set; }
-    }
+    [JsonProperty("data")]
+    public byte[] Data { get; set; } = [];
 }

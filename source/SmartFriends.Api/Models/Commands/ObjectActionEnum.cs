@@ -1,7 +1,6 @@
-﻿namespace SmartFriends.Api.Models.Commands
+﻿namespace SmartFriends.Api.Models.Commands;
+
+public enum ObjectActionEnum
 {
-    public enum ObjectActionEnum
-    {
-        getImage
-    }
+    getImage
 }

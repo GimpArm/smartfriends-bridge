@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
 
-namespace SmartFriends.Mqtt.Models
+namespace SmartFriends.Mqtt.Models;
+
+public class Availability
 {
-    public class Availability
-    {
-        [JsonProperty("topic")]
-        public string Topic { get; set; }
-    }
+    [JsonProperty("topic")]
+    public string Topic { get; set; } = string.Empty;
 }
