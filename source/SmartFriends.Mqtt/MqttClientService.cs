@@ -60,7 +60,7 @@ public class MqttClientService : IHostedService
         await _mqttClient.Close();
     }
 
-    private async Task ReplyActionRelay(int deviceId, string kind, string payload)
+    private async Task ReplyActionRelay(int deviceId, string? kind, string payload)
     {
         if (int.TryParse(payload, out var intValue))
         {

@@ -35,7 +35,7 @@ public class MqttClient : IDisposable
     private CancellationTokenSource? _tokenSource;
     private Thread? _keepAliveThread;
 
-    public Func<int, string, string, Task>? RelayAction { get; set; }
+    public Func<int, string?, string, Task>? RelayAction { get; set; }
 
     public MqttClient(IOptions<MqttConfiguration> mqttConfig, ILogger<MqttClient> logger, TypeTemplateEngine templateEngine)
     {
@@ -275,7 +275,7 @@ public class MqttClient : IDisposable
 
         if (!int.TryParse(topicParts[1].Substring(3), out var deviceId)) return;
 
-        var kind = topicParts.Length > 3 ? topicParts[2] : string.Empty;
+        var kind = topicParts.Length > 3 ? topicParts[2] : null;
 
         if (RelayAction != null)
         {
